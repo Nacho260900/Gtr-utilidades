@@ -1,676 +1,824 @@
+import os
 import time
-from playwright.sync_api import sync_playwright
+import json
+import asyncio
+import ctypes
+from datetime import datetime
+from dotenv import load_dotenv
+from playwright.async_api import async_playwright
 
-def run():
-    print("Iniciando automatizacion de Monitores (Paso a Paso)...")
-    with sync_playwright() as p:
-        # Iniciar navegador Chromium en modo visible (headed) y maximizado
-        browser = p.chromium.launch(headless=False, args=["--start-maximized"])
-        context = browser.new_context(no_viewport=True)
-        page = context.new_page()
+load_dotenv()
+
+USUARIO = os.getenv("USUARIO", "1839")
+PASSWORD = os.getenv("PASSWORD", "2022")
+
+async def extraer_datos_de_monitor(page, monitor_id, monitor_label=""):
+    """
+    Extrae la lista completa de filas y datos de agentes en tiempo real desde la tabla #grid1_rows.
+    """
+    if not page or page.is_closed():
+        return None
+    try:
+        data = await page.evaluate("""
+        () => {
+            const rows = Array.from(document.querySelectorAll("#grid1_rows tr"));
+            const totalText = document.getElementById("grid1_registros")?.textContent?.trim() || "";
+            
+            const agentes = rows.map((tr) => {
+                const tds = Array.from(tr.querySelectorAll("td"));
+                if (tds.length < 3) return null;
+                
+                const rawUsuario = tds[0].textContent.trim();
+                const rawEstado = tds[1].textContent.trim();
+                const rawCampana = tds[2].textContent.trim();
+                const bgColor = tr.style.backgroundColor || "";
+                
+                // Extraer Usuario: "1014 - VERONICA , RUSSO"
+                let id_usuario = "";
+                let nombre = rawUsuario;
+                const uMatch = rawUsuario.match(/^(\\d+)\\s*-\\s*(.+)$/);
+                if (uMatch) {
+                    id_usuario = uMatch[1].trim();
+                    nombre = uMatch[2].trim();
+                }
+                
+                // Extraer Estado: "Agente (0:02:44) | 111557616871 (NO PROCESADO)" o "Logueado (0:00:09)"
+                let estado = rawEstado;
+                let duracion = "";
+                let telefono = "";
+                let tipo_llamada = "";
+                
+                const partsEstado = rawEstado.split("|").map(s => s.trim());
+                const eMatch = partsEstado[0].match(/^([^(]+)\\s*\\(([^)]+)\\)/);
+                if (eMatch) {
+                    estado = eMatch[1].trim();
+                    duracion = eMatch[2].trim();
+                } else {
+                    estado = partsEstado[0];
+                }
+                
+                if (partsEstado.length > 1) {
+                    const telPart = partsEstado[1];
+                    const tMatch = telPart.match(/^([^(]+)(?:\\(([^)]+)\\))?/);
+                    if (tMatch) {
+                        telefono = (tMatch[1] || "").trim();
+                        tipo_llamada = (tMatch[2] || "").trim();
+                    }
+                }
+                
+                // Extraer Campaña: "50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A"
+                let id_campana = "";
+                let campana = rawCampana;
+                let tipo_discador = "";
+                let cola = "";
+                
+                const partsCamp = rawCampana.split("|").map(s => s.trim());
+                if (partsCamp.length > 1) {
+                    cola = partsCamp[1];
+                }
+                
+                const cMatch = partsCamp[0].match(/^([^(]+)(?:\\(([^)]+)\\))?/);
+                if (cMatch) {
+                    const campText = cMatch[1].trim();
+                    tipo_discador = (cMatch[2] || "").trim();
+                    const cidMatch = campText.match(/^(\\d+)\\s*-\\s*(.+)$/);
+                    if (cidMatch) {
+                        id_campana = cidMatch[1].trim();
+                        campana = cidMatch[2].trim();
+                    } else {
+                        campana = campText;
+                    }
+                }
+                
+                return {
+                    id_usuario,
+                    nombre,
+                    estado,
+                    duracion,
+                    telefono,
+                    tipo_llamada,
+                    id_campana,
+                    campana,
+                    tipo_discador,
+                    cola,
+                    color_fondo: bgColor,
+                    raw: {
+                        usuario: rawUsuario,
+                        estado: rawEstado,
+                        campana: rawCampana
+                    }
+                };
+            }).filter(Boolean);
+            
+            return {
+                total_registros_texto: totalText,
+                total_registros: agentes.length,
+                agentes: agentes
+            };
+        }
+        """)
+        if data:
+            data["monitor_id"] = monitor_id
+            data["monitor_label"] = monitor_label
+            return data
+    except Exception as e:
+        return {"monitor_id": monitor_id, "monitor_label": monitor_label, "error": str(e), "agentes": []}
+    return None
+
+def duracion_a_segundos(dur_str):
+    """
+    Convierte formatos 'H:MM:SS', 'MM:SS' o 'S' a segundos enteros.
+    """
+    if not dur_str:
+        return 0
+    try:
+        parts = [int(p) for p in str(dur_str).strip().split(":") if p.strip().isdigit()]
+        if len(parts) == 3:  # H:MM:SS
+            return parts[0] * 3600 + parts[1] * 60 + parts[2]
+        elif len(parts) == 2:  # MM:SS
+            return parts[0] * 60 + parts[1]
+        elif len(parts) == 1:
+            return parts[0]
+    except Exception:
+        return 0
+    return 0
+
+def segundos_a_duracion(segundos):
+    """
+    Convierte una cantidad de segundos a formato HH:MM:SS
+    """
+    total_sec = int(round(segundos))
+    h = total_sec // 3600
+    m = (total_sec % 3600) // 60
+    s = total_sec % 60
+    return f"{h:02d}:{m:02d}:{s:02d}"
+
+async def ciclo_captura_tiempo_real(monitores_info, intervalo=3, json_file="monitores_live.json"):
+    """
+    Ciclo continuo que extrae datos y calcula el tiempo promedio de agentes en 'Logueado' de los 3 monitores cada 3 segundos.
+    """
+    print(f"\n[INFO] Extractor en tiempo real activo (cada {intervalo}s). Datos guardados en: '{json_file}'")
+    print("Calculando tiempo promedio de agentes en estado 'Logueado' (Promedio Global de los 3 Monitores)...\n")
+    print("Presiona Ctrl+C en esta terminal para detener la ejecucion y cerrar los monitores.\n")
+    
+    while True:
+        timestamp_ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        resumen_monitores = {
+            "timestamp": timestamp_ahora,
+            "metricas_logueados": {
+                "global": {},
+                "por_monitor": {}
+            },
+            "monitores": []
+        }
         
-        url = "http://172.16.20.10/NEOTEL/"
-        print(f"1. Navegando a {url}...")
-        try:
-            page.goto(url, timeout=30000)
-        except Exception as e:
-            print(f"Error de conexion al abrir la IP: {e}")
-            browser.close()
-            return
+        todas_duraciones_seg = []
+        breakdown_console = []
+        
+        for info in monitores_info:
+            page_obj = info.get("page")
+            m_id = info.get("id")
+            m_label = info.get("label", "")
             
-        print("2. Esperando formulario de login...")
-        try:
-            usuario_xpath = 'xpath=//*[@id="txtUsuario"]'
-            password_xpath = 'xpath=//*[@id="txtClave"]'
-            login_btn_xpath = 'xpath=//*[@id="NeoIngresarButton1"]'
-            
-            # Buscar frame de login
-            login_frame = None
-            for _ in range(15):
-                for frame in page.frames:
-                    if frame.locator(usuario_xpath).count() > 0:
-                        login_frame = frame
-                        break
-                if login_frame:
-                    break
-                time.sleep(1)
+            m_data = await extraer_datos_de_monitor(page_obj, m_id, m_label)
+            if m_data and "error" not in m_data:
+                resumen_monitores["monitores"].append(m_data)
                 
-            if not login_frame:
-                print("Error: No se encontro el frame de login.")
-                browser.close()
-                return
+                # Filtrar agentes en estado "Logueado" (independiente del color de fondo de la fila)
+                agentes_logueados = [
+                    ag for ag in m_data.get("agentes", [])
+                    if "logueado" in ag.get("estado", "").lower()
+                ]
                 
-            print("3. Completando credenciales...")
-            login_frame.locator(usuario_xpath).fill("1839")
-            login_frame.locator(password_xpath).fill("2022")
+                duraciones_seg = [
+                    duracion_a_segundos(ag.get("duracion", "0"))
+                    for ag in agentes_logueados
+                ]
+                
+                todas_duraciones_seg.extend(duraciones_seg)
+                
+                cant_log = len(agentes_logueados)
+                if cant_log > 0:
+                    prom_seg = sum(duraciones_seg) / cant_log
+                    min_seg = min(duraciones_seg)
+                    max_seg = max(duraciones_seg)
+                    prom_fmt = segundos_a_duracion(prom_seg)
+                    min_fmt = segundos_a_duracion(min_seg)
+                    max_fmt = segundos_a_duracion(max_seg)
+                else:
+                    prom_seg = 0
+                    prom_fmt = "00:00:00"
+                    min_fmt = "00:00:00"
+                    max_fmt = "00:00:00"
+                    
+                resumen_monitores["metricas_logueados"]["por_monitor"][str(m_id)] = {
+                    "label": m_label,
+                    "agentes_logueados": cant_log,
+                    "promedio_segundos": round(prom_seg, 2),
+                    "promedio_formato": prom_fmt,
+                    "minimo_formato": min_fmt,
+                    "maximo_formato": max_fmt
+                }
+                
+                breakdown_console.append(f"M{m_id}: {cant_log} ({prom_fmt})")
+            else:
+                err_msg = m_data.get("error", "Desconectado") if m_data else "Cerrado"
+                breakdown_console.append(f"M{m_id}: [Error]")
+        
+        # Cálculo métricas globales consolidadas (todos los agentes logueados de los 3 monitores)
+        total_global = len(todas_duraciones_seg)
+        if total_global > 0:
+            prom_global_seg = sum(todas_duraciones_seg) / total_global
+            min_global_seg = min(todas_duraciones_seg)
+            max_global_seg = max(todas_duraciones_seg)
+            prom_global_fmt = segundos_a_duracion(prom_global_seg)
+            min_global_fmt = segundos_a_duracion(min_global_seg)
+            max_global_fmt = segundos_a_duracion(max_global_seg)
+        else:
+            prom_global_seg = 0
+            prom_global_fmt = "00:00:00"
+            min_global_fmt = "00:00:00"
+            max_global_fmt = "00:00:00"
             
-            print("4. Haciendo clic en 'Log In'...")
-            login_frame.locator(login_btn_xpath).click()
-            print("Login enviado. Esperando carga del panel principal...")
-            
+        resumen_monitores["metricas_logueados"]["global"] = {
+            "total_agentes_logueados": total_global,
+            "promedio_segundos": round(prom_global_seg, 2),
+            "promedio_formato": prom_global_fmt,
+            "minimo_formato": min_global_fmt,
+            "maximo_formato": max_global_fmt
+        }
+        
+        # Guardar en archivo JSON local en tiempo real
+        try:
+            with open(json_file, "w", encoding="utf-8") as f:
+                json.dump(resumen_monitores, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            print(f"Error al iniciar sesion: {e}")
-            browser.close()
-            return
+            print(f"Error al escribir en {json_file}: {e}")
+            
+        linea_log = f"[{timestamp_ahora}] [LOGUEADOS GLOBAL] Total: {total_global} | Promedio: {prom_global_fmt} ({prom_global_seg:.1f}s) | " + " | ".join(breakdown_console)
+        print(linea_log)
+            
+        await asyncio.sleep(intervalo)
 
-        # 5. Esperar al frame interactivo de modulos buscando el elemento '#favDiv2'
-        print("5. Localizando panel de modulos (buscando elemento '#favDiv2' en los frames)...")
-        modulos_frame = None
-        for _ in range(25):
+
+async def ejecutar_flujo_completo(browser, window_index, campana_text, estados_list=None):
+    print(f"\n==========================================")
+    print(f"   [Ventana {window_index}] Iniciando proceso completo")
+    print(f"==========================================")
+    
+    # Cada flujo se ejecuta en un contexto independiente (ventana independiente con sesión propia)
+    context = await browser.new_context(no_viewport=True)
+    page = await context.new_page()
+    
+    url = "http://172.16.20.10/NEOTEL/"
+    print(f"[{window_index}] 1. Navegando a {url}...")
+    try:
+        await page.goto(url, timeout=30000)
+    except Exception as e:
+        print(f"[{window_index}] Error de conexion al abrir la IP: {e}")
+        return None
+        
+    print(f"[{window_index}] 2. Esperando formulario de login...")
+    try:
+        usuario_xpath = 'xpath=//*[@id="txtUsuario"]'
+        password_xpath = 'xpath=//*[@id="txtClave"]'
+        login_btn_xpath = 'xpath=//*[@id="NeoIngresarButton1"]'
+        
+        # Buscar frame de login
+        login_frame = None
+        for _ in range(20):
             for frame in page.frames:
-                try:
-                    if frame.locator("#favDiv2").count() > 0:
-                        modulos_frame = frame
-                        break
-                except Exception:
-                    pass
-            if modulos_frame:
+                if await frame.locator(usuario_xpath).count() > 0:
+                    login_frame = frame
+                    break
+            if login_frame:
                 break
-            time.sleep(1)
+            await asyncio.sleep(1)
             
-        if not modulos_frame:
-            print("Error: No se localizo el frame de modulos (el elemento '#favDiv2' no aparecio en ningun frame).")
-            # Imprimimos los frames activos para debug
-            print("Frames activos en la pagina:")
-            for idx, frame in enumerate(page.frames):
-                print(f"  Frame {idx}: name='{frame.name}', url='{frame.url}'")
-            browser.close()
-            return
+        if not login_frame:
+            print(f"[{window_index}] Error: No se encontro el frame de login.")
+            return None
             
-        print(f"Panel localizado: '{modulos_frame.name}' ({modulos_frame.url})")
+        print(f"[{window_index}] 3. Completando credenciales...")
+        await login_frame.locator(usuario_xpath).fill(USUARIO)
+        await login_frame.locator(password_xpath).fill(PASSWORD)
         
-        # 6. Hacer clic en la tarjeta CRM (favDiv2)
-        print("6. Haciendo clic en la tarjeta 'CRM'...")
-        try:
-            crm_card = modulos_frame.locator("#favDiv2")
-            crm_card.wait_for(state="visible", timeout=15000)
-            crm_card.click()
-            print("Tarjeta 'CRM' clickeada.")
-        except Exception as e:
-            print(f"Error al hacer clic en CRM: {e}")
-            browser.close()
-            return
-            
-        # 7. Seleccionar la campaña '1 - MOVISTAR' de forma ultra-robusta (Programática + Clics)
-        print("7. Seleccionando la opcion '1 - MOVISTAR'...")
-        try:
-            # 1. Selección programática en el select oculto
-            cbo_crm = modulos_frame.locator("select#cboCRM")
-            cbo_crm.wait_for(state="attached", timeout=10000)
-            cbo_crm.select_option(value="1")
-            
-            # 2. Forzar el evento 'change' para que Neotel ejecute cboCRM_Change
-            cbo_crm.evaluate("el => el.dispatchEvent(new Event('change', { bubbles: true }))")
-            time.sleep(1)
-            
-            # 3. Simular clics en la interfaz visual de SumoSelect para asegurar la consistencia del DOM
-            try:
-                modulos_frame.locator(".sumo_cboCRM p.CaptionCont").click(timeout=3000)
-                time.sleep(0.5)
-                modulos_frame.locator(".sumo_cboCRM .options li:has-text('1 - MOVISTAR')").click(timeout=3000)
-            except Exception:
-                # Si falla el clic visual por estar oculto, la selección programática ya está hecha
-                pass
-                
-            print("Opcion '1 - MOVISTAR' seleccionada.")
-        except Exception as e:
-            print(f"Error al seleccionar la opcion en el dropdown: {e}")
-            browser.close()
-            return
-            
-        # 8. Hacer clic en el boton de confirmacion (#btnSeleccionar)
-        print("8. Confirmando seleccion con boton 'Seleccionar'...")
-        try:
-            confirm_btn = modulos_frame.locator("#btnSeleccionar")
-            confirm_btn.wait_for(state="visible", timeout=10000)
-            confirm_btn.click()
-            print("Seleccion confirmada exitosamente.")
-            
-            # Esperar a que el spinner de carga desaparezca
-            print("Esperando a que termine de cargar la pantalla de inicio...")
-            try:
-                modulos_frame.locator(".waiting_div2, #imgLoading").wait_for(state="hidden", timeout=15000)
-            except Exception:
-                pass
-                
-        except Exception as e:
-            print(f"Error al hacer clic en el boton Seleccionar: {e}")
-            browser.close()
-            return
+        print(f"[{window_index}] 4. Haciendo clic en 'Log In'...")
+        await login_frame.locator(login_btn_xpath).click()
+        print(f"[{window_index}] Login enviado. Esperando panel principal...")
+        
+    except Exception as e:
+        print(f"[{window_index}] Error al iniciar sesion: {e}")
+        return None
 
-        # 9. Esperar 10 segundos o aguardar al botón 'OK' (SweetAlert) y hacer clic
-        print("9. Esperando alerta flotante SweetAlert ('OK')...")
-        main_frame = None
+    # 5. Esperar al frame interactivo de modulos buscando '#favDiv2'
+    print(f"[{window_index}] 5. Localizando panel de modulos (#favDiv2)...")
+    modulos_frame = None
+    for _ in range(25):
+        for frame in page.frames:
+            try:
+                if await frame.locator("#favDiv2").count() > 0:
+                    modulos_frame = frame
+                    break
+            except Exception:
+                pass
+        if modulos_frame:
+            break
+        await asyncio.sleep(1)
+        
+    if not modulos_frame:
+        print(f"[{window_index}] Error: No se localizo el frame de modulos.")
+        return None
+        
+    # 6. Hacer clic en CRM
+    print(f"[{window_index}] 6. Haciendo clic en 'CRM'...")
+    try:
+        crm_card = modulos_frame.locator("#favDiv2")
+        await crm_card.wait_for(state="visible", timeout=15000)
+        await crm_card.click()
+    except Exception as e:
+        print(f"[{window_index}] Error al hacer clic en CRM: {e}")
+        return None
+        
+    # 7. Seleccionar '1 - MOVISTAR'
+    print(f"[{window_index}] 7. Seleccionando opcion '1 - MOVISTAR'...")
+    try:
+        cbo_crm = modulos_frame.locator("select#cboCRM")
+        await cbo_crm.wait_for(state="attached", timeout=10000)
+        await cbo_crm.select_option(value="1")
+        await cbo_crm.evaluate("el => el.dispatchEvent(new Event('change', { bubbles: true }))")
+        await asyncio.sleep(1)
+        
+        try:
+            await modulos_frame.locator(".sumo_cboCRM p.CaptionCont").click(timeout=3000)
+            await asyncio.sleep(0.5)
+            await modulos_frame.locator(".sumo_cboCRM .options li:has-text('1 - MOVISTAR')").click(timeout=3000)
+        except Exception:
+            pass
+            
+    except Exception as e:
+        print(f"[{window_index}] Error al seleccionar opcion en dropdown: {e}")
+        return None
+        
+    # 8. Confirmar seleccion con #btnSeleccionar
+    print(f"[{window_index}] 8. Confirmando seleccion con 'Seleccionar'...")
+    try:
+        confirm_btn = modulos_frame.locator("#btnSeleccionar")
+        await confirm_btn.wait_for(state="visible", timeout=10000)
+        await confirm_btn.click()
+        
+        try:
+            await modulos_frame.locator(".waiting_div2, #imgLoading").wait_for(state="hidden", timeout=15000)
+        except Exception:
+            pass
+            
+    except Exception as e:
+        print(f"[{window_index}] Error al hacer clic en Seleccionar: {e}")
+        return None
+
+    # 9. Esperar alerta SweetAlert ('OK') y confirmar
+    print(f"[{window_index}] 9. Esperando alerta flotante SweetAlert ('OK')...")
+    main_frame = None
+    for _ in range(25):
         for frame in page.frames:
             if frame.name == "main" or "default.aspx" in frame.url:
                 main_frame = frame
                 break
-                
-        if not main_frame:
-            print("Error: No se localizo el frame 'main'.")
-            browser.close()
-            return
-            
-        try:
-            confirm_alert_btn = main_frame.locator("button.confirm")
-            confirm_alert_btn.wait_for(state="visible", timeout=15000)
-            confirm_alert_btn.click()
-            print("Alerta flotante confirmada (OK).")
-            time.sleep(2)
-        except Exception as e:
-            print(f"Error o timeout al confirmar la alerta flotante: {e}")
-            
-        # 10. Abrir el monitor de usuarios evaluando la función JS directamente
-        print("10. Abriendo el monitor de usuarios llamando a setIFramePage()...")
-        try:
-            main_frame.evaluate("""
-                setIFramePage(
-                    'ControlBoards_Custom_Test.aspx?TIPOACCION=EJ&IDPROC=5&DESCRIP=USERS_MONITOR&IDOPERACION=2&IDDATASOURCE=0&TYPE=5',
-                    'Monitor de usuarios',
-                    '',
-                    1,
-                    'fal fa-monitor-heart-rate'
-                )
-            """)
-            print("Llamada a setIFramePage ejecutada correctamente.")
-        except Exception as e:
-            print(f"Error al abrir el monitor via setIFramePage: {e}")
-            browser.close()
-            return
-            
-        # 11. Localizar el frame del formulario de ejecucion (contiene #EXECUTIONMODE)
-        print("11. Localizando panel de ejecucion (hasta 40 segundos)...")
-        exec_frame = None
-        for _ in range(40):
-            for frame in page.frames:
-                try:
-                    if frame.locator("#EXECUTIONMODE").count() > 0:
-                        exec_frame = frame
-                        break
-                except Exception:
-                    pass
-            if exec_frame:
-                break
-            time.sleep(1)
-            
-        if not exec_frame:
-            print("Error: No se localizo el frame de ejecucion (elemento '#EXECUTIONMODE' no encontrado).")
-            # Mostrar los frames para diagnóstico
-            for idx, frame in enumerate(page.frames):
-                print(f"  Frame {idx}: name='{frame.name}', url='{frame.url}'")
-            browser.close()
-            return
-            
-        # 12. Seleccionar 'WINDOWMODE' (Ventana)
-        print("12. Seleccionando modo 'Ventana'...")
-        try:
-            # 1. Selección programática en el select oculto
-            exec_select = exec_frame.locator("select#EXECUTIONMODE")
-            exec_select.wait_for(state="attached", timeout=10000)
-            exec_select.select_option(value="WINDOWMODE")
-            
-            # 2. Forzar evento change por si acaso
-            exec_select.evaluate("el => el.dispatchEvent(new Event('change', { bubbles: true }))")
-            time.sleep(1)
-            
-            # 3. Simular clics en la interfaz visual de SumoSelect para abrir la lista y seleccionar
+        if main_frame:
+            break
+        await asyncio.sleep(1)
+        
+    if not main_frame:
+        print(f"[{window_index}] Error: No se localizo el frame 'main'.")
+        return None
+        
+    try:
+        confirm_alert_btn = main_frame.locator("button.confirm")
+        await confirm_alert_btn.wait_for(state="visible", timeout=15000)
+        await confirm_alert_btn.click()
+        print(f"[{window_index}] Alerta flotante confirmada (OK).")
+        await asyncio.sleep(2)
+    except Exception as e:
+        print(f"[{window_index}] Alerta flotante no requerida o confirmada: {e}")
+
+    # 10. Abrir monitor de usuarios llamando a setIFramePage()
+    print(f"[{window_index}] 10. Abriendo monitor de usuarios llamando a setIFramePage()...")
+    try:
+        await main_frame.evaluate("""
+            setIFramePage(
+                'ControlBoards_Custom_Test.aspx?TIPOACCION=EJ&IDPROC=5&DESCRIP=USERS_MONITOR&IDOPERACION=2&IDDATASOURCE=0&TYPE=5',
+                'Monitor de usuarios',
+                '',
+                1,
+                'fal fa-monitor-heart-rate'
+            )
+        """)
+    except Exception as e:
+        print(f"[{window_index}] Error al llamar a setIFramePage: {e}")
+        return None
+        
+    # 11. Localizar panel de ejecución
+    print(f"[{window_index}] 11. Localizando panel de ejecucion...")
+    exec_frame = None
+    for _ in range(40):
+        for frame in page.frames:
             try:
-                # Clic en la barra para abrir el desplegable
-                exec_frame.locator(".sumo_EXECUTIONMODE p.CaptionCont").click(timeout=3000)
-                time.sleep(0.5)
-                # Clic en la opción "Ventana"
-                exec_frame.locator(".sumo_EXECUTIONMODE .options li:has-text('Ventana')").click(timeout=3000)
-            except Exception as e:
-                print(f"No se pudo completar el clic visual en SumoSelect (se usara la seleccion programatica): {e}")
+                if await frame.locator("#EXECUTIONMODE").count() > 0:
+                    exec_frame = frame
+                    break
+            except Exception:
+                pass
+        if exec_frame:
+            break
+        await asyncio.sleep(1)
+        
+    if not exec_frame:
+        print(f"[{window_index}] Error: No se localizo el frame de ejecucion.")
+        return None
+        
+    # 12. Seleccionar modo 'Ventana' (WINDOWMODE)
+    print(f"[{window_index}] 12. Seleccionando modo 'Ventana'...")
+    try:
+        exec_select = exec_frame.locator("select#EXECUTIONMODE")
+        await exec_select.wait_for(state="attached", timeout=10000)
+        await exec_select.select_option(value="WINDOWMODE")
+        await exec_select.evaluate("el => el.dispatchEvent(new Event('change', { bubbles: true }))")
+        await asyncio.sleep(0.5)
+        try:
+            await exec_frame.locator(".sumo_EXECUTIONMODE p.CaptionCont").click(timeout=3000)
+            await asyncio.sleep(0.3)
+            await exec_frame.locator(".sumo_EXECUTIONMODE .options li:has-text('Ventana')").click(timeout=3000)
+        except Exception:
+            pass
+    except Exception as e:
+        print(f"[{window_index}] Error al seleccionar modo Ventana: {e}")
+        return None
+
+    # 13. Habilitar filtro por campañas y seleccionar la campaña
+    print(f"[{window_index}] 13. Habilitando 'Filtro por campanas' y seleccionando '{campana_text}'...")
+    try:
+        campanas_toggle = exec_frame.locator("#iconFiltro_por_Campañas")
+        await campanas_toggle.wait_for(state="visible", timeout=10000)
+        await campanas_toggle.click()
+        await asyncio.sleep(1)
+        
+        await exec_frame.locator(".sumo_Campañas p.CaptionCont").click()
+        await asyncio.sleep(0.5)
+        
+        selected_campana = await exec_frame.evaluate("""
+            (target) => {
+                const container = document.querySelector('.sumo_Campañas');
+                if (!container) return 'no_sumo_Campañas';
+                const lis = Array.from(container.querySelectorAll('.options li'));
+                const cleanTarget = String(target).replace(/[\\s\\u00a0]+/g, ' ').trim().toLowerCase();
+                const targetDigits = String(target).match(/^\\d+/)?.[0] || String(target).match(/\\d+/)?.[0];
                 
-            print("Modo 'Ventana' seleccionado con exito.")
-        except Exception as e:
-            print(f"Error al seleccionar modo Ventana: {e}")
-            browser.close()
-            return
+                for (const li of lis) {
+                    const rawText = li.textContent || '';
+                    const cleanText = rawText.replace(/[\\s\\u00a0]+/g, ' ').trim().toLowerCase();
+                    const liDigits = cleanText.match(/^\\d+/)?.[0];
+                    
+                    let isMatch = false;
+                    if (targetDigits && liDigits && targetDigits === liDigits) {
+                        isMatch = true;
+                    } else if (cleanText.includes(cleanTarget) || cleanTarget.includes(cleanText)) {
+                        isMatch = true;
+                    }
+                    
+                    if (isMatch) {
+                        if (!li.classList.contains('selected')) {
+                            const label = li.querySelector('label') || li;
+                            label.click();
+                        }
+                        return rawText.trim();
+                    }
+                }
+                return 'no_match (disponibles: ' + lis.length + ')';
+            }
+        """, campana_text)
+        print(f"[{window_index}] Campaña seleccionada en DOM: {selected_campana}")
+        await asyncio.sleep(0.5)
+        await page.keyboard.press("Escape")
+        await asyncio.sleep(0.5)
+    except Exception as e:
+        print(f"[{window_index}] Error al seleccionar campana: {e}")
+        return None
 
-        # 13. Habilitar filtro por campañas (hacer clic en el checkbox/toggle)
-        print("13. Habilitando 'Filtro por campanas'...")
-        try:
-            campanas_toggle = exec_frame.locator("#iconFiltro_por_Campañas")
-            campanas_toggle.wait_for(state="visible", timeout=10000)
-            campanas_toggle.click()
-            print("Filtro por campanas habilitado.")
-            time.sleep(1)
-        except Exception as e:
-            print(f"Error al habilitar filtro por campanas: {e}")
-            browser.close()
-            return
-            
-        # 14. Abrir desplegable de campanas y elegir '50 - PREDICTIVO PORTABILIDAD'
-        print("14. Seleccionando la campana '50 - PREDICTIVO PORTABILIDAD'...")
-        try:
-            # Abrir el menú SumoSelect de campañas
-            exec_frame.locator(".sumo_Campañas p.CaptionCont").click()
-            time.sleep(0.5)
-            
-            # Clic en la opción 50
-            exec_frame.locator(".sumo_Campañas .options li:has-text('50 - PREDICTIVO PORTABILIDAD')").click()
-            time.sleep(0.5)
-            
-            # Presionar escape para cerrar la lista desplegable
-            page.keyboard.press("Escape")
-            time.sleep(1)
-        except Exception as e:
-            print(f"Error al seleccionar campana: {e}")
-            browser.close()
-            return
-
-        # 15. Habilitar filtro de estado por usuario
-        print("15. Habilitando 'Filtro por estado de usuario'...")
+    # 14. Configurar filtro por estado de usuario (si aplica)
+    if estados_list:
+        print(f"[{window_index}] 14. Habilitando 'Filtro por estado de usuario'...")
         try:
             estado_toggle = exec_frame.locator("#iconFiltro_por_Estado_de_Usuario")
-            estado_toggle.wait_for(state="visible", timeout=10000)
-            estado_toggle.click()
-            print("Filtro por estado de usuario habilitado.")
-            time.sleep(1)
-        except Exception as e:
-            print(f"Error al habilitar filtro de estado por usuario: {e}")
-            browser.close()
-            return
-
-        # 16. Seleccionar los estados de usuario requeridos
-        print("16. Seleccionando estados de usuarios...")
-        try:
-            # Abrir el menú SumoSelect de estados de usuarios
-            exec_frame.locator(".sumo_Estados_Usuarios p.CaptionCont").click()
-            time.sleep(1)
+            await estado_toggle.wait_for(state="visible", timeout=10000)
+            await estado_toggle.click()
+            await asyncio.sleep(1)
             
-            estados_a_seleccionar = [
-                "Agente (Ent.)",
-                "Agente (Sal.)",
-                "Llamando (Sal.)",
-                "Logueado",
-                "Logueado SD",
-                "Ringing (Ent.)",
-                "Ringing (Sal.)"
-            ]
+            print(f"[{window_index}] Seleccionando estados requeridos...")
+            await exec_frame.locator(".sumo_Estados_Usuarios p.CaptionCont").click()
+            await asyncio.sleep(0.5)
             
-            # Obtener todos los elementos de la lista en tiempo real
-            li_count = exec_frame.locator(".sumo_Estados_Usuarios .options li").count()
-            li_items = []
-            for idx in range(li_count):
-                li_loc = exec_frame.locator(".sumo_Estados_Usuarios .options li").nth(idx)
-                li_items.append((li_loc.text_content().strip(), li_loc))
-                
-            clicked_indices = set()
-            
-            for estado in estados_a_seleccionar:
-                # Si es "Logueado SD", buscamos el segundo "Logueado" en la interfaz
-                match_text = "Logueado" if estado == "Logueado SD" else estado
-                
-                found = False
-                for idx, (txt, li_loc) in enumerate(li_items):
-                    if match_text in txt and idx not in clicked_indices:
-                        print(f"  Haciendo clic en: {txt} (indice {idx})")
-                        li_loc.click()
-                        clicked_indices.add(idx)
-                        time.sleep(0.3)
-                        found = True
-                        break
-                if not found:
-                    print(f"  No se pudo seleccionar el estado: {estado}")
-            
-            # Presionar escape para cerrar el menú desplegable
-            page.keyboard.press("Escape")
-            time.sleep(1)
-            print("Estados de usuario seleccionados con exito.")
-        except Exception as e:
-            print(f"Error al seleccionar los estados de usuario: {e}")
-            browser.close()
-            return
-
-        # 17. Configurar columnas adicionales
-        print("17. Seleccionando 'Campaña / Cola' en Columnas Adicionales...")
-        try:
-            # Abrir el menú SumoSelect de Columnas Adicionales
-            exec_frame.locator(".sumo_Columnas_Adicionales p.CaptionCont").click()
-            time.sleep(0.5)
-            
-            # Clic en la opción "Campaña / Cola"
-            exec_frame.locator(".sumo_Columnas_Adicionales .options li:has-text('Campaña / Cola')").click()
-            time.sleep(0.5)
-            
-            # Presionar escape para cerrar el desplegable
-            page.keyboard.press("Escape")
-            time.sleep(1)
-            print("Columnas adicionales configuradas con exito.")
-        except Exception as e:
-            print(f"Error al seleccionar columnas adicionales: {e}")
-            browser.close()
-            return
-
-        # 18. Hacer clic en el botón 'btnEjecutar' para abrir el monitor de usuarios en una nueva ventana
-        print("18. Iniciando el monitor de usuarios (#btnEjecutar)...")
-        popup_page = None
-        try:
-            # Esperamos a que el navegador detecte la nueva ventana abierta tras el clic
-            with page.context.expect_page() as new_page_info:
-                btn_ejecutar = exec_frame.locator("#btnEjecutar")
-                btn_ejecutar.wait_for(state="visible", timeout=10000)
-                btn_ejecutar.click()
-            popup_page = new_page_info.value
-            print("\n=== Monitor lanzado con exito en una nueva ventana ===")
-        except Exception as e:
-            print(f"Error al lanzar el monitor: {e}")
-            browser.close()
-            return
-
-        # 19. Ajustar posición y tamaño de la nueva ventana (usando API nativa de Windows via ctypes)
-        if popup_page:
-            import json
-            import os
-            import ctypes
-            
-            # Estructura RECT para GetWindowRect
-            class RECT(ctypes.Structure):
-                _fields_ = [("left", ctypes.c_int),
-                            ("top", ctypes.c_int),
-                            ("right", ctypes.c_int),
-                            ("bottom", ctypes.c_int)]
-            
-            def get_window_coords_by_title(title_substring):
-                coords = None
-                EnumWindows = ctypes.windll.user32.EnumWindows
-                EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
-                GetWindowText = ctypes.windll.user32.GetWindowTextW
-                GetWindowTextLength = ctypes.windll.user32.GetWindowTextLengthW
-                IsWindowVisible = ctypes.windll.user32.IsWindowVisible
-                GetWindowRect = ctypes.windll.user32.GetWindowRect
-                
-                def foreach_window(hwnd, lParam):
-                    nonlocal coords
-                    if IsWindowVisible(hwnd):
-                        length = GetWindowTextLength(hwnd)
-                        buff = ctypes.create_unicode_buffer(length + 1)
-                        GetWindowText(hwnd, buff, length + 1)
-                        title = buff.value
-                        if title_substring in title:
-                            rect = RECT()
-                            GetWindowRect(hwnd, ctypes.byref(rect))
-                            coords = {
-                                "x": rect.left,
-                                "y": rect.top,
-                                "w": rect.right - rect.left,
-                                "h": rect.bottom - rect.top
+            clicked_estados = await exec_frame.evaluate("""
+                (estados) => {
+                    const lis = Array.from(document.querySelectorAll('.sumo_Estados_Usuarios .options li'));
+                    const results = [];
+                    const clickedIndices = new Set();
+                    
+                    for (const estado of estados) {
+                        const estClean = estado.toLowerCase().replace(/[\\/\\s]/g, '');
+                        for (let i = 0; i < lis.length; i++) {
+                            if (clickedIndices.has(i)) continue;
+                            const li = lis[i];
+                            const txt = (li.textContent || '').trim();
+                            const txtClean = txt.toLowerCase().replace(/[\\/\\s]/g, '');
+                            
+                            let isMatch = false;
+                            if (estado === "Logueado SD" || estado === "Logueado S/D") {
+                                isMatch = txtClean.includes("logueadosd") || (txtClean.includes("logueado") && txtClean.includes("sd"));
+                            } else if (estado === "Logueado") {
+                                isMatch = (txt.toLowerCase() === "logueado") || (txtClean.startsWith("logueado") && !txtClean.includes("sd"));
+                            } else {
+                                isMatch = txtClean.includes(estClean) || txt.toLowerCase().includes(estado.toLowerCase());
                             }
-                            return False
-                    return True
-                
-                EnumWindows(EnumWindowsProc(foreach_window), 0)
-                return coords
-            
-            def move_window_by_title(title_substring, x, y, w, h, exclude_hwnds=None):
-                target_hwnd = None
-                EnumWindows = ctypes.windll.user32.EnumWindows
-                EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
-                GetWindowText = ctypes.windll.user32.GetWindowTextW
-                GetWindowTextLength = ctypes.windll.user32.GetWindowTextLengthW
-                IsWindowVisible = ctypes.windll.user32.IsWindowVisible
-                MoveWindow = ctypes.windll.user32.MoveWindow
-                
-                def foreach_window(hwnd, lParam):
-                    nonlocal target_hwnd
-                    if IsWindowVisible(hwnd):
-                        if exclude_hwnds and hwnd in exclude_hwnds:
-                            return True
-                        length = GetWindowTextLength(hwnd)
-                        buff = ctypes.create_unicode_buffer(length + 1)
-                        GetWindowText(hwnd, buff, length + 1)
-                        title = buff.value
-                        if title_substring in title:
-                            MoveWindow(hwnd, x, y, w, h, True)
-                            target_hwnd = hwnd
-                            return False
-                    return True
-                
-                EnumWindows(EnumWindowsProc(foreach_window), 0)
-                return target_hwnd
-            
-            config_path = "window_config.json"
-            title_search = "Monitor de usuarios"
-            hwnd_1 = None
-            hwnd_2 = None
-            
-            try:
-                # Esperamos a que la ventana esté lista
-                popup_page.wait_for_load_state("domcontentloaded", timeout=10000)
-                time.sleep(2) # Esperar a que el S.O. registre e inicialice la ventana física
-                
-                if os.path.exists(config_path):
-                    # Si ya existe la configuración, la cargamos y aplicamos via Win32 API
-                    with open(config_path, "r") as f:
-                        config = json.load(f)
-                    print(f"Cargando posicion de ventana desde {config_path}: {config}")
-                    
-                    hwnd_1 = move_window_by_title(title_search, config['x'], config['y'], config['w'], config['h'])
-                    time.sleep(0.5)
-                    # Re-aplicar por si acaso el S.O. estaba en transición
-                    move_window_by_title(title_search, config['x'], config['y'], config['w'], config['h'])
-                    print("Ventana 1 reposicionada exitosamente con Win32 API.")
-                else:
-                    # Si no existe, le pedimos al usuario que la acomode
-                    print("\n" + "="*60)
-                    print("=== CONFIGURACION DE POSICION DE VENTANA ===")
-                    print("Acomoda la ventana del monitor manualmente en la pantalla (posicion y tamaño).")
-                    print("Una vez que la tengas lista, presiona ENTER aqui en esta terminal...")
-                    print("="*60)
-                    
-                    input() # Espera al enter en la consola
-                    
-                    # Leemos la posición real usando la API de Windows
-                    coords = get_window_coords_by_title(title_search)
-                    if coords:
-                        # Guardamos la configuración en un archivo json
-                        with open(config_path, "w") as f:
-                            json.dump(coords, f, indent=4)
-                        print(f"\nConfiguracion guardada en '{config_path}': {coords}")
-                        print("En las proximas ejecuciones se abrira en esta misma posicion de forma automatica.")
-                        
-                        # Guardamos el hwnd_1 tras calibrar
-                        hwnd_1 = move_window_by_title(title_search, coords['x'], coords['y'], coords['w'], coords['h'])
-                    else:
-                        print("No se pudo detectar la ventana del monitor mediante Win32 API.")
-            except Exception as e:
-                print(f"Advertencia al configurar la ventana 1: {e}")
-                
-            # 20. Enfocar la pantalla de configuración, deseleccionar estados previos y seleccionar los otros
-            print("\n20. Enfocando la pestaña de configuracion para el segundo monitor...")
-            try:
-                page.bring_to_front()
-                time.sleep(1)
-                
-                # Abrir el menú SumoSelect de estados de usuarios
-                exec_frame.locator(".sumo_Estados_Usuarios p.CaptionCont").click()
-                time.sleep(1)
-                
-                # Obtener elementos en tiempo real
-                li_count = exec_frame.locator(".sumo_Estados_Usuarios .options li").count()
-                li_items = []
-                for idx in range(li_count):
-                    li_loc = exec_frame.locator(".sumo_Estados_Usuarios .options li").nth(idx)
-                    li_items.append((li_loc.text_content().strip(), li_loc))
-                    
-                # Deseleccionamos los que marcamos al principio
-                print("Deseleccionando los estados anteriores...")
-                clicked_indices = set()
-                for estado in estados_a_seleccionar:
-                    match_text = "Logueado" if estado == "Logueado SD" else estado
-                    for idx, (txt, li_loc) in enumerate(li_items):
-                        if match_text in txt and idx not in clicked_indices:
-                            li_loc.click()
-                            clicked_indices.add(idx)
-                            time.sleep(0.2)
-                            break
                             
-                # Seleccionamos los otros estados (Descanso, Descanso Ext., Funciones Int., etc.)
-                nuevos_estados = ["Descanso", "Descanso Ext.", "Funciones Int.", "Mostrando", "Mostrar", "No Registrado", "Pausa"]
-                print("Seleccionando los estados restantes...")
-                new_clicked_indices = set()
-                for estado in nuevos_estados:
-                    for idx, (txt, li_loc) in enumerate(li_items):
-                        if estado.lower() in txt.lower() and idx not in new_clicked_indices:
-                            li_loc.click()
-                            new_clicked_indices.add(idx)
-                            time.sleep(0.2)
-                            break
-                            
-                # Presionar escape para cerrar el menú desplegable
-                page.keyboard.press("Escape")
-                time.sleep(1)
-                print("Estados actualizados para el segundo monitor.")
-            except Exception as e:
-                print(f"Error al configurar estados del segundo monitor: {e}")
-                browser.close()
-                return
-                
-            # 21. Lanzar el segundo monitor de usuarios
-            print("21. Lanzando el segundo monitor de usuarios (#btnEjecutar)...")
-            popup_page_2 = None
+                            if (isMatch) {
+                                li.click();
+                                clickedIndices.add(i);
+                                results.push(txt);
+                                break;
+                            }
+                        }
+                    }
+                    return results;
+                }
+            """, estados_list)
+            print(f"[{window_index}] Estados seleccionados: {clicked_estados}")
+            await asyncio.sleep(0.5)
+            await page.keyboard.press("Escape")
+            await asyncio.sleep(0.5)
+        except Exception as e:
+            print(f"[{window_index}] Error al configurar estados de usuario: {e}")
+            return None
+    else:
+        print(f"[{window_index}] 14. Filtro por estado de usuario no requerido (se omite).")
+
+    # 15. Configurar Columnas Adicionales ('Campaña / Cola')
+    print(f"[{window_index}] 15. Seleccionando 'Campaña / Cola' en Columnas Adicionales...")
+    try:
+        await exec_frame.locator(".sumo_Columnas_Adicionales p.CaptionCont").click()
+        await asyncio.sleep(0.5)
+        selected_col = await exec_frame.evaluate("""
+            () => {
+                const lis = Array.from(document.querySelectorAll('.sumo_Columnas_Adicionales .options li'));
+                for (const li of lis) {
+                    const txt = (li.textContent || '').trim();
+                    if (txt.includes('Campaña') || txt.includes('Campana') || txt.includes('Cola')) {
+                        li.click();
+                        return txt;
+                    }
+                }
+                return null;
+            }
+        """)
+        print(f"[{window_index}] Columna adicional seleccionada: {selected_col}")
+        await asyncio.sleep(0.5)
+        await page.keyboard.press("Escape")
+        await asyncio.sleep(0.5)
+    except Exception as e:
+        print(f"[{window_index}] Error al seleccionar columnas adicionales: {e}")
+        return None
+
+    # 16. Lanzar el monitor con #btnEjecutar
+    print(f"[{window_index}] 16. Iniciando el monitor (#btnEjecutar)...")
+    popup_page = None
+    try:
+        async with page.context.expect_page() as new_page_info:
+            btn_ejecutar = exec_frame.locator("#btnEjecutar")
+            await btn_ejecutar.wait_for(state="visible", timeout=10000)
+            await btn_ejecutar.click()
+        popup_page = await new_page_info.value
+        print(f"\n=== Monitor {window_index} lanzado con exito en una nueva ventana ===")
+        
+        # Etiquetar el título de la ventana para identificarla unívocamente
+        try:
+            await popup_page.wait_for_load_state("domcontentloaded", timeout=10000)
+            await popup_page.evaluate(f"document.title = 'Monitor de usuarios - {window_index}'")
+        except Exception:
+            pass
+    except Exception as e:
+        print(f"[{window_index}] Error al lanzar el monitor: {e}")
+        return page, None
+        
+    return page, popup_page
+
+async def run():
+    print("Iniciando automatizacion de 3 Ventanas de Monitores en paralelo...")
+    async with async_playwright() as p:
+        # Iniciar Chromium en modo visible
+        browser = await p.chromium.launch(headless=False, args=["--start-maximized"])
+
+        # Listas de estados requeridos
+        estados_monitor_1 = [
+            "Agente (Ent.)",
+            "Agente (Sal.)",
+            "Llamando (Sal.)",
+            "Logueado",
+            "Logueado SD",
+            "Ringing (Ent.)",
+            "Ringing (Sal.)"
+        ]
+
+        estados_monitor_2 = [
+            "Descanso",
+            "Descanso Ext.",
+            "Funciones Int.",
+            "Mostrando",
+            "Mostrar",
+            "No Registrado",
+            "Pausa"
+        ]
+
+        # Ejecutar los 3 flujos completos en paralelo en 3 ventanas diferentes
+        results = await asyncio.gather(
+            ejecutar_flujo_completo(browser, 1, "50", estados_monitor_1),
+            ejecutar_flujo_completo(browser, 2, "50", estados_monitor_2),
+            ejecutar_flujo_completo(browser, 3, "140", None)
+        )
+        orig_page_1, popup_page_1 = results[0] if results[0] else (None, None)
+        orig_page_2, popup_page_2 = results[1] if results[1] else (None, None)
+        orig_page_3, popup_page_3 = results[2] if results[2] else (None, None)
+
+        # Ajustar posición y tamaño de las 3 ventanas con Win32 API
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(2) # PROCESS_PER_MONITOR_DPI_AWARE
+        except Exception:
             try:
-                with page.context.expect_page() as new_page_info_2:
-                    btn_ejecutar = exec_frame.locator("#btnEjecutar")
-                    btn_ejecutar.click()
-                popup_page_2 = new_page_info_2.value
-                print("Segundo monitor lanzado exitosamente.")
-            except Exception as e:
-                print(f"Error al lanzar el segundo monitor: {e}")
-                browser.close()
-                return
-                
-            # 22. Ajustar la posición y tamaño del segundo monitor (segundo tercio)
-            if popup_page_2:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except Exception:
+                pass
+        
+        class RECT(ctypes.Structure):
+            _fields_ = [("left", ctypes.c_int),
+                        ("top", ctypes.c_int),
+                        ("right", ctypes.c_int),
+                        ("bottom", ctypes.c_int)]
+        
+        def move_window_by_title(title_substring, x, y, w, h, exclude_hwnds=None):
+            target_hwnd = None
+            EnumWindows = ctypes.windll.user32.EnumWindows
+            EnumWindowsProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+            GetWindowText = ctypes.windll.user32.GetWindowTextW
+            GetWindowTextLength = ctypes.windll.user32.GetWindowTextLengthW
+            IsWindowVisible = ctypes.windll.user32.IsWindowVisible
+            MoveWindow = ctypes.windll.user32.MoveWindow
+            
+            def foreach_window(hwnd, lParam):
+                nonlocal target_hwnd
+                if IsWindowVisible(hwnd):
+                    if exclude_hwnds and hwnd in exclude_hwnds:
+                        return True
+                    length = GetWindowTextLength(hwnd)
+                    buff = ctypes.create_unicode_buffer(length + 1)
+                    GetWindowText(hwnd, buff, length + 1)
+                    title = buff.value
+                    if title_substring in title:
+                        MoveWindow(hwnd, x, y, w, h, True)
+                        target_hwnd = hwnd
+                        return False
+                return True
+            
+            EnumWindows(EnumWindowsProc(foreach_window), 0)
+            return target_hwnd
+
+        user32 = ctypes.windll.user32
+        monitors = []
+        
+        class MONITORINFO(ctypes.Structure):
+            _fields_ = [
+                ("cbSize", ctypes.c_ulong),
+                ("rcMonitor", RECT),
+                ("rcWork", RECT),
+                ("dwFlags", ctypes.c_ulong)
+            ]
+        
+        def monitor_enum_proc(hMonitor, hdcMonitor, lprcMonitor, dwData):
+            mi = MONITORINFO()
+            mi.cbSize = ctypes.sizeof(MONITORINFO)
+            if user32.GetMonitorInfoW(hMonitor, ctypes.byref(mi)):
+                monitors.append({
+                    "left": mi.rcWork.left,
+                    "top": mi.rcWork.top,
+                    "width": mi.rcWork.right - mi.rcWork.left,
+                    "height": mi.rcWork.bottom - mi.rcWork.top
+                })
+            return True
+            
+        MonitorEnumProc = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)
+        user32.EnumDisplayMonitors(0, 0, MonitorEnumProc(monitor_enum_proc), 0)
+        
+        monitors.sort(key=lambda m: m["left"])
+        target_monitor = monitors[-1] if len(monitors) > 1 else monitors[0]
+        
+        b_x = 7
+        b_y = 7
+        step_w = target_monitor["width"] // 3
+        
+        config = {
+            "x": target_monitor["left"] - b_x,
+            "y": target_monitor["top"],
+            "w": step_w + (b_x * 2),
+            "h": target_monitor["height"] + b_y,
+            "step_x": step_w
+        }
+        
+        hwnd_1 = None
+        hwnd_2 = None
+        hwnd_3 = None
+
+        print("\nPosicionando los 3 monitores en pantalla...")
+        await asyncio.sleep(2)
+        
+        # Monitor 1 (Tercio 1)
+        hwnd_1 = move_window_by_title("Monitor de usuarios - 1", config['x'], config['y'], config['w'], config['h'])
+        if not hwnd_1:
+            hwnd_1 = move_window_by_title("Monitor de usuarios", config['x'], config['y'], config['w'], config['h'])
+        print("Monitor 1 posicionado en Tercio 1.")
+
+        # Monitor 2 (Tercio 2)
+        x2 = config['x'] + config['step_x']
+        hwnd_2 = move_window_by_title("Monitor de usuarios - 2", x2, config['y'], config['w'], config['h'], exclude_hwnds={hwnd_1})
+        if not hwnd_2:
+            hwnd_2 = move_window_by_title("Monitor de usuarios", x2, config['y'], config['w'], config['h'], exclude_hwnds={hwnd_1})
+        print("Monitor 2 posicionado en Tercio 2.")
+
+        # Monitor 3 (Tercio 3)
+        x3 = config['x'] + (config['step_x'] * 2)
+        hwnd_3 = move_window_by_title("Monitor de usuarios - 3", x3, config['y'], config['w'], config['h'], exclude_hwnds={hwnd_1, hwnd_2})
+        if not hwnd_3:
+            hwnd_3 = move_window_by_title("Monitor de usuarios", x3, config['y'], config['w'], config['h'], exclude_hwnds={hwnd_1, hwnd_2})
+        print("Monitor 3 posicionado en Tercio 3.")
+
+        # Aplicar zoom del 90% y dimensiones calibradas en las 3 ventanas emergentes
+        print("\nAplicando zoom de 90% y dimensiones calibradas...")
+        js_code = """
+        () => {
+            document.body.style.zoom = "0.9";
+            let el = document.getElementById("grid1_div");
+            if (el) {
+                el.style.top = "-54px";
+                el.style.left = "-15px";
+                el.style.width = "780px";
+                el.style.height = "1027px";
+                el.style.position = "absolute";
+            }
+        }
+        """
+        for p_obj in [popup_page_1, popup_page_2, popup_page_3]:
+            if p_obj:
                 try:
-                    popup_page_2.wait_for_load_state("domcontentloaded", timeout=10000)
-                    time.sleep(2) # Esperamos al S.O.
-                    
-                    if os.path.exists(config_path):
-                        with open(config_path, "r") as f:
-                            config = json.load(f)
-                            
-                        # El segundo tercio comienza exactamente al lado del primero (X = X1 + Ancho1)
-                        # Restamos 16px para compensar los bordes invisibles de Windows y que queden perfectamente pegados
-                        x2 = config['x'] + config['w'] - 16
-                        
-                        print(f"Posicionando el segundo monitor en X={x2}, Y={config['y']}, W={config['w']}, H={config['h']}")
-                        hwnd_2 = move_window_by_title(title_search, x2, config['y'], config['w'], config['h'], exclude_hwnds={hwnd_1})
-                        time.sleep(0.5)
-                        move_window_by_title(title_search, x2, config['y'], config['w'], config['h'], exclude_hwnds={hwnd_1})
-                        print("Segundo monitor posicionado en el segundo tercio.")
-                    else:
-                        print("No se encontro configuracion guardada para alinear el segundo monitor.")
+                    await p_obj.evaluate(js_code)
                 except Exception as e:
-                    print(f"Advertencia al posicionar el segundo monitor: {e}")
-                    
-            # 23. Configurar y lanzar el tercer monitor
-            print("\n23. Enfocando la pestaña de configuracion para el tercer monitor...")
-            try:
-                page.bring_to_front()
-                time.sleep(1)
-                
-                # Desactivar el filtro de estado de usuario
-                print("Desactivando el filtro de estado de usuario...")
-                estado_toggle = exec_frame.locator("#iconFiltro_por_Estado_de_Usuario")
-                estado_toggle.wait_for(state="visible", timeout=10000)
-                estado_toggle.click()
-                time.sleep(1)
-                
-                # Abrir desplegable de campañas
-                print("Modificando filtro de campañas para el tercer monitor...")
-                exec_frame.locator(".sumo_Campañas p.CaptionCont").click()
-                time.sleep(1)
-                
-                # Deseleccionar campaña 50
-                print("Deseleccionando campana 50...")
-                exec_frame.locator(".sumo_Campañas .options li:has-text('50 - PREDICTIVO PORTABILIDAD')").click()
-                time.sleep(0.5)
-                
-                # Seleccionar campaña 140
-                print("Seleccionando campana 140...")
-                exec_frame.locator(".sumo_Campañas .options li:has-text('140')").first.click()
-                time.sleep(0.5)
-                
-                # Presionar escape para cerrar
-                page.keyboard.press("Escape")
-                time.sleep(1)
-                print("Campañas actualizadas para el tercer monitor.")
-            except Exception as e:
-                print(f"Error al configurar filtros del tercer monitor: {e}")
-                browser.close()
-                return
-                
-            # 24. Lanzar el tercer monitor
-            print("24. Lanzando el tercer monitor de usuarios (#btnEjecutar)...")
-            popup_page_3 = None
-            try:
-                with page.context.expect_page() as new_page_info_3:
-                    btn_ejecutar = exec_frame.locator("#btnEjecutar")
-                    btn_ejecutar.click()
-                popup_page_3 = new_page_info_3.value
-                print("Tercer monitor lanzado exitosamente.")
-            except Exception as e:
-                print(f"Error al lanzar el tercer monitor: {e}")
-                browser.close()
-                return
-                
-            # 25. Ajustar la posición y tamaño del tercer monitor (tercer tercio)
-            if popup_page_3:
+                    print(f"Advertencia al inyectar auto-ajuste: {e}")
+
+        # Cerrar las ventanas de navegación/configuración originales (dejando únicamente los 3 monitores)
+        print("\nCerrando las 3 ventanas de configuracion originales...")
+        for orig_p in [orig_page_1, orig_page_2, orig_page_3]:
+            if orig_p:
                 try:
-                    popup_page_3.wait_for_load_state("domcontentloaded", timeout=10000)
-                    time.sleep(2) # Esperamos al S.O.
-                    
-                    if os.path.exists(config_path):
-                        with open(config_path, "r") as f:
-                            config = json.load(f)
-                            
-                # El tercer tercio comienza al lado del segundo (X = X1 + Ancho1 * 2)
-                        # Restamos 32px para compensar los bordes invisibles acumulados de Windows
-                        x3 = config['x'] + (config['w'] * 2) - 32
-                        
-                        print(f"Posicionando el tercer monitor en X={x3}, Y={config['y']}, W={config['w']}, H={config['h']}")
-                        hwnd_3 = move_window_by_title(title_search, x3, config['y'], config['w'], config['h'], exclude_hwnds={hwnd_1, hwnd_2})
-                        time.sleep(0.5)
-                        move_window_by_title(title_search, x3, config['y'], config['w'], config['h'], exclude_hwnds={hwnd_1, hwnd_2})
-                        print("Tercer monitor posicionado en el tercer tercio.")
-                    else:
-                        print("No se encontro configuracion guardada para alinear el tercer monitor.")
+                    await orig_p.close()
                 except Exception as e:
-                    print(f"Advertencia al posicionar el tercer monitor: {e}")
-                    
-            # 26. Traer los 3 monitores al frente de la pantalla
-            def bring_window_to_front(hwnd):
-                if hwnd:
-                    # SW_RESTORE = 9
-                    ctypes.windll.user32.ShowWindow(hwnd, 9)
-                    ctypes.windll.user32.SetForegroundWindow(hwnd)
-                    ctypes.windll.user32.BringWindowToTop(hwnd)
-            
-            print("\n26. Trayendo los 3 monitores al frente de la pantalla...")
-            try:
-                time.sleep(1)
-                bring_window_to_front(hwnd_1)
-                time.sleep(0.3)
-                bring_window_to_front(hwnd_2)
-                time.sleep(0.3)
-                bring_window_to_front(hwnd_3)
-                print("Los 3 monitores han sido enfocados al frente.")
-            except Exception as e:
-                print(f"Advertencia al traer las ventanas al frente: {e}")
+                    print(f"Advertencia al cerrar ventana original: {e}")
+
+        # Traer los 3 monitores al frente
+        def bring_window_to_front(hwnd):
+            if hwnd:
+                ctypes.windll.user32.ShowWindow(hwnd, 9)
+                ctypes.windll.user32.SetForegroundWindow(hwnd)
+                ctypes.windll.user32.BringWindowToTop(hwnd)
+
+        print("\nTrayendo los 3 monitores al frente...")
+        try:
+            await asyncio.sleep(1)
+            bring_window_to_front(hwnd_1)
+            await asyncio.sleep(0.3)
+            bring_window_to_front(hwnd_2)
+            await asyncio.sleep(0.3)
+            bring_window_to_front(hwnd_3)
+            print("Los 3 monitores han sido enfocados al frente.")
+        except Exception as e:
+            print(f"Advertencia al traer ventanas al frente: {e}")
+
+        monitores_info = [
+            {"id": 1, "label": "Campaña 50 - Estados 1", "page": popup_page_1},
+            {"id": 2, "label": "Campaña 50 - Estados 2", "page": popup_page_2},
+            {"id": 3, "label": "Campaña 140", "page": popup_page_3},
+        ]
 
         print("\n=== Automatizacion completada con exito ===")
-        print("El navegador permanecera abierto. Presiona Ctrl+C en esta terminal para cerrarlo.")
-        
         try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            print("\nCerrando navegador...")
-            browser.close()
+            await ciclo_captura_tiempo_real(monitores_info, intervalo=3, json_file="monitores_live.json")
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            print("\nCerrando monitores y navegador...")
+            await browser.close()
 
 if __name__ == "__main__":
-    run()
+    asyncio.run(run())

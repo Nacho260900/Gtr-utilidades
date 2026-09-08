@@ -1,0 +1,1523 @@
+<html class=" webkit chrome win js"><head><link href="sweetalert/lib/sweet-alert.css" type="text/css" rel="stylesheet" id="sweet-Alert-css"><link type="text/css" rel="stylesheet" href="css/StyleBlue_14052026_150305230.css" id="hojaDeEstilosNeotel">
+
+
+
+
+    <title>Monitor de usuarios (1)</title>
+    <script type="text/javascript" src="FusionCharts/js/FusionCharts.js"></script>
+    <script type="text/javascript" src="FusionCharts/js/FusionCharts.Maps.js"></script>
+    <script type="text/javascript" src="FusionCharts/js/Maps/FusionCharts.world.js"></script>
+    <script type="text/javascript" src="FusionCharts/js/fusioncharts.widgets.js"></script>
+
+    <style type="text/css">
+        .modal
+        {
+            opacity: .8;
+            filter: Alpha(Opacity=8);
+        }
+        
+        .label
+        {
+            background-color: transparent;
+            color: Black;
+        }
+        
+        .process
+        {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            background-image: url('images/process.png');
+            background-repeat: no-repeat;
+            cursor: hand;
+            cursor: pointer;
+            z-index: 550;
+            width: 25px;
+            height: 25px;
+        }
+        
+        .process:hover
+        {
+            background-image: url('images/process_hover.png');
+        }
+        
+        
+        .gridContainer
+        {
+            border-width: 0.5px;
+            border-color: white;
+            border-style: solid;
+        }
+        
+        .gridContainer:hover
+        {
+            border-width: 0.5px;
+            border-color: #A0CCEB;
+            border-style: dotted;
+            cursor: move;
+        }
+        
+        .contateinerValue
+        {
+            border-width: 0.5px;
+            border-color: white;
+            border-style: solid;
+        }
+        
+        .contateinerValue:hover
+        {
+            border-width: 0.5px;
+            border-color: #A0CCEB;
+            border-style: dotted;
+            cursor: move;
+        }
+        
+        .tableValue span
+        {
+            height: 100% !important;
+            top: inherit !important;
+            left: inherit !important;
+        }
+        
+        .chartContainer
+        {
+            border-width: 0.5px;
+            border-color: white;
+            border-style: solid;
+        }
+        
+        
+        .chartContainer span
+        {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        .chartContainer svg
+        {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        
+        .chartContainer rect
+        {
+            cursor: move;
+        }
+        
+        .chartContainer:hover
+        {
+            border-width: 0.5px;
+            border-color: #A0CCEB;
+            border-style: dotted;
+            cursor: move;
+        }
+        
+        .BOTONPARAM2
+        {
+            border-top-left-radius: 0px !important;
+            border-top-right-radius: 0px !important;
+            width: 32px !important;
+        }
+        
+        .PARAMETERTITLE
+        {
+            color: White;
+            width: 100%;
+            position: absolute;
+            top: 3px;
+            left: 0px;
+            text-align: center;
+            font-family: avenir;
+            font-weight: bold;
+            font-size: 15px;
+            margin-top: 2px;
+        }
+        
+        #cntParameters
+        {
+            border: 1px solid rgb(191, 191, 191) !important;
+        }
+
+        .GRIDTITLE td {
+            padding-right: 2px !important;
+            padding-left: 3px !important;
+        }
+
+        .GRIDROWALTERNATE td {
+            padding-right: 2px !important;
+            padding-left: 3px !important;
+        }
+
+
+        .GRIDROW td {
+            padding-right: 2px !important;
+            padding-left: 3px !important;
+        }
+
+        div[id$="_cnt_titles"] {
+            width: calc(100% - 0px) !important;
+        }        
+        
+    </style>
+<link rel="stylesheet" href="fontawesome-pro-5.15.4-web/css/all.css" type="text/css" media="screen"><script type="text/javascript" src="./js/css_browser_selector.js"></script><link type="text/css" href="./tooltipster-master/css/tooltipster.css" rel="stylesheet" media="screen"><link type="text/css" href="./sumoselect/stylesheets/sumoselect.min.css" rel="stylesheet" media="screen"><script type="text/javascript" src="./sumoselect/javascripts/jquery.sumoselect.min.js"></script><link rel="stylesheet" href="fontawesome-pro-5.15.4-web/css/all.css" type="text/css" media="screen"><link rel="stylesheet" href="css/tablero_5.css" type="text/css"></head>
+<body bottommargin="0" bgcolor="white" leftmargin="0" topmargin="0" rightmargin="0" style="overflow: hidden auto; z-index: -4; cursor: auto;" class="MARCO MARCO_READY">
+    <form name="Form1" method="post" action="ControlBoards_Custom_Test_PoupUp.aspx?idWin=1&amp;drillDown=0" id="Form1">
+<div>
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="">
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="">
+<input type="hidden" name="__LASTFOCUS" id="__LASTFOCUS" value="">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="JrdOoE/MwF54MSZ8t8pGLjlydotJ/K/9hdif0t+j+52WONBG8kG88Vw4hOSI2NFRBCTmp8UPqXDyI4/7nq6mVfBTabgIiXpOnA2lxQK48LZbU1wafzFI3ChEOlpoHz1XK76CQ/dWkQm2M6RuP4yIq1R/76/JSva7IONC6GoMo3muYuCD4hNud0bpsC+ENBsg/ZQN8YEWPwaDaX8v/BhGulQw928QtWAKopL1TEcLnRSwtLuZD04WVon2zrmj069l9sDesNnUxlys1ZC1s45eEFdOnQ/3JHjntGxAdADurad6XqgzNBeRTkEUZxCsvGqSbmHfdFDB4Dy5qqV4XYCxG4yO8jKgGWgXm0r2U/+fsd282uR5GAFzHNBne6nssJH6z73Fl9axOD3zoqrm/swDI0LUTBWF33Yrn6GNbjKKPo6jDyf4mHtorTJqWuBg8eLeZ+mvmOXL7qUhhAf6hy2wI2ttfxA6ZlD+ROBvOrl09ARoBW+FBmJyGNPxB6u5UUTCICbP3tkTui7HQHR77DD9ME+DZstigjCJeFV+DMw1rRTYWWHO9ngESeTD2v6/IbSLfP0+hrA2djdsUD90//dMYIaDUKZVcKoxekckkBD7nVwJtIfRGoNW+q96GxrpF6GLn817NxcAohYKhUCcCBTC4PcIPoz6rYQxjjAXN5mS1oP1VJh5ShOAhsYDoVL7MWqK4BOV2TpoficEYYn4kzTs7Pb6tqpZNnlvccd//Zmqpkh5GrtlgLWsWr2Ob5E7xT2FhGVa4yoWJ7vVdwBJJcD8ctK4bEJ7mht994L+uNNFNd/KH8Neh0WgWcUPZZ6sSWDAI4FAa4I3uQThoY4fI7M6vfXU0PqcksUSFvdI2SmZ/7wEaOZ1uqkRdI6wp8nUnahwlgXP14LN4LSoWoJYc2mbhGD2HUpbbiOWeslYxhgAQ9akTBWnQjm20jNj6g8+7iRT212Cdg4+5iFPnA5Is3zgDVQa2/73A8Z9B/k1ZnzkiD56i7k+wvhI4cWA49ZysNEw/QSos+n6fb9u8qIS4cAzb0c1Vyv2ilCZemYHosV1e5WEwfQH">
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['Form1'];
+if (!theForm) {
+    theForm = document.Form1;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/ECRM/WebResource.axd?d=65u_ZdkWbAA_Quka82d1SohL9-o1fYaInW0foZpjpreU8W_Ov6payuvpaRYiwmGCD4pUljuYbz_IohzzdEDQXLPw1OE1&amp;t=637811827700000000" type="text/javascript"></script>
+
+<style type="text/css">
+#grid1_cnt_rows>table>tbody>tr>td:nth-child(1){
+width: 140px;
+min-width: 140px;
+max-width: 140px;
+text-align: left;
+}
+#grid1_cnt_rows>table>tbody>tr>td:nth-child(1) img{
+max-height: 150px; 
+max-width: 140px
+}
+#grid1_titleRow td:nth-child(1){
+width: 139px;
+min-width: 139px;
+max-width: 139px;
+text-align: left;
+}
+#grid1_cnt_rows>table>tbody>tr>td:nth-child(2){
+width: 180px;
+min-width: 180px;
+max-width: 180px;
+text-align: left;
+}
+#grid1_cnt_rows>table>tbody>tr>td:nth-child(2) img{
+max-height: 150px; 
+max-width: 180px
+}
+#grid1_titleRow td:nth-child(2){
+width: 179px;
+min-width: 179px;
+max-width: 179px;
+text-align: left;
+}
+#grid1_cnt_rows>table>tbody>tr>td:nth-child(3){
+width: 180px;
+min-width: 180px;
+max-width: 180px;
+text-align: left;
+}
+#grid1_cnt_rows>table>tbody>tr>td:nth-child(3) img{
+max-height: 150px; 
+max-width: 180px
+}
+#grid1_titleRow td:nth-child(3){
+width: 179px;
+min-width: 179px;
+max-width: 179px;
+text-align: left;
+}
+
+</style>
+<script src="js/jquery-3.7.0.js" type="text/javascript"></script>
+<script src="sweetalert/lib/sweet-alert.js" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+
+document.navigator = 'Chrome';
+document.navigatorVersion = '151';
+document.sweetAlert = true;
+document.isPostBack = false;
+
+//]]>
+</script>
+
+<script src="js/neoscript_ie_14052026_150305230.js" type="text/javascript"></script>
+<script src="js/jquery-3.7.0.js" type="text/javascript"></script>
+<script src="js/neocontroles_14052026_150305230.js" type="text/javascript"></script>
+<script src="js/avoidInspect_14052026_150305230.js" type="text/javascript"></script>
+<script language="javascript" defer="">
+
+registrarBoton_btnParametros();
+function registrarBoton_btnParametros()
+{
+if (document.getElementById('btnParametros'))
+{
+	document.getElementById('btnParametros').controlesToValidate = 'Todos';
+
+	document.getElementById('btnParametros').autodesHabilitar = false;
+
+	document.getElementById('btnParametros').causesValidation = false;
+
+	document.getElementById('btnParametros').checkRegistros = false;
+
+	document.getElementById('btnParametros').checkRegistroSeleccionado = false;
+
+	document.getElementById('btnParametros').gridMsg = '';
+
+	document.getElementById('btnParametros').confirmationMsg = '';
+
+	document.getElementById('btnParametros').pageToCall = '';
+
+	document.getElementById('btnParametros').gridID = '';
+
+	document.getElementById('btnParametros').queryString = '';
+
+} else {setTimeout('registrarBoton_btnParametros();',100);}
+}
+	 function btnParametrosValidar(CauseValidation)
+	{
+		return true;
+	}
+</script>
+<script type="text/javascript" src="/ECRM/ajaxpro/prototype.ashx"></script>
+<script type="text/javascript" src="/ECRM/ajaxpro/core.ashx"></script>
+<script type="text/javascript" src="/ECRM/ajaxpro/converter.ashx"></script>
+<script type="text/javascript" src="/ECRM/ajaxpro/Neotel.WebControls.NeoPage,App_Code.ashx"></script>
+<script type="text/javascript" src="/ECRM/ajaxpro/ECRM.ControlBoards_Custom_Test_PoupUp,App_Code.ashx"></script>
+
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="54312934">
+	<input type="hidden" name="__VIEWSTATEENCRYPTED" id="__VIEWSTATEENCRYPTED" value="">
+</div>
+    <div style="position: absolute; height: 100%; width: 100%; top: 0px" id="containerFloatWindows">
+    </div>
+    <table width="100%" height="100%" style="padding-top: 10px; box-sizing: border-box;" class="marco-popup">
+        <tbody><tr valign="top" class="trLabel">
+            <td style="position: absolute; width: calc(100% - 20px); border-right-width: 0px;">
+                <div id="cntParametros" align="left" ms_positioning="GridLayout" style="z-index: 500;
+                    margin: 0 auto 10px; left: 0px; width: 689px; position: relative; top: 0px; display: none;
+                    height: 41px;" class="SUBCONTENEDOR">
+                    <div id="btnReprocess" class="process" title="Aplicar" onclick="ApplyNewValues();">
+                    </div>
+                </div>
+                <div id="chartsdiv" style="z-index:1;left:0px;position:relative;top:0px;height:100%;margin:auto;width:780;">
+                    <div id="vs" style="color:Red;display:none;">
+
+</div>
+                <div id="grid1_div" style="position: absolute; width: 780px; height: 870px; inset: -54px auto auto -16px; background: none 0% 0% / auto repeat scroll padding-box border-box rgb(233, 234, 238);" class="gridContainer ui-resizable ui-draggable ui-draggable-handle"><div id="grid1_regCountCnt" style="height: 15px; width: 100%; left: 0px; position: absolute; display: inline; text-align: center; bottom: 80px; background: none 0% 0% / auto repeat scroll padding-box border-box rgb(255, 255, 255);">
+	<span id="grid1_registros" style="font-family:Roboto;font-size:10px;font-weight:bold;">Registros (37)</span>
+</div><div id="grid1_references" style="height: 80px; width: 100%; left: 0px; position: absolute; display: inline; text-align: center; bottom: 0px; background: none 0% 0% / auto repeat scroll padding-box border-box rgb(255, 255, 255);">
+	<span style="color:gray;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Logueado </span><span style="color:black;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Logueado S/D </span><span style="color:darkorange;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Descanso </span><span style="color:red;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Descanso Ext. </span><span style="color:brown;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Ringing (Ent.) </span><span style="color:green;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Agente (Ent.) </span><span style="color:purple;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Llamando (Sal.) </span><span style="color:lightblue;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Ringing (Sal.) </span><span style="color:blue;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Agente (Sal.) </span><span style="color:indianred;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Mostrando </span><span style="color:chocolate;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Pausa </span><span style="color:darkgoldenrod;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Mostrar </span><span style="color:olive;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> Funciones Int. </span><span style="color:indigo;font-family:Roboto;font-size:14px;"> ■ </span><span style="font-family:Roboto;font-size:10px;"> No Registrado </span>
+</div><div id="grid1_cnt_titles" style="left: 0px; top: 0px; height: 41px; width: calc(100% + 2px); overflow: hidden; z-index: 100; position: absolute; max-width: calc(505px);" class="GRIDTITLE"><table id="grid1_titles" cellspacing="0" cellpadding="0" rules="all" class="GRIDTITLE" border="1" style="width: 100%; border-collapse: collapse; left: 0px; top: -1px; height: 40px; z-index: 101; position: absolute;">
+	<tbody><tr id="grid1_titleRow" class="GRIDTITLE" style="height: 40px; width: 511.5px;">
+		<td align="center" valign="middle" style="width: 28%; min-width: 140px;">Usuario</td><td align="center" valign="middle" style="width: 36%; min-width: 180px;">Estado (Duración)| Teléfono (Tipo Llamada)</td><td align="center" valign="middle" style="width: 36%; border-right-width: 0px; min-width: 180px;">Campaña (Tipo Discador)| Cola</td>
+	</tr>
+</tbody></table><span id="grid1_puntero2" class="GRIDTITLE" style="display:inline-block;width:0px;TOP:0;position:absolute;left:5000;">.</span></div><div id="grid1_cnt_rows" style="left: 0px; top: 39px; height: calc(100% - 136px); width: 100%; overflow: auto scroll; z-index: 101; position: absolute;" class="GRID"><table id="grid1_rows" cellspacing="0" cellpadding="0" classname="GRID" border="0" style="height: auto; width: 100%; border-collapse: collapse; top: 0px; left: 0px; z-index: 10; position: absolute; padding-left: 3px;">
+	<tbody><tr id="grid1_EmptyRow" class="GRIDROWALTERNATE" style="height: 14px; padding-left: 3px; z-index: 15000; background-color: gray; color: white; cursor: pointer;">
+		<td style="width:140px;" id="grid1_0_0" class="tooltipstered">1014 - VERONICA , RUSSO</td><td style="width:180px;" id="grid1_0_1" class="tooltipstered">Logueado (0:00:09)</td><td style="width: 180px; border-right-width: 0px;" id="grid1_0_2" class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td>
+	</tr>
+<tr class="GRIDROW" style="z-index: 15000; background-color: gray; color: white; cursor: pointer;"><td class="tooltipstered">1075 - GENARO, MERCADO</td><td class="tooltipstered">Logueado (0:00:12)</td><td class="tooltipstered">1 - LLAMADOS MANUALES (Manual) | N/A</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">1101 - LUCAS RODRIGO, CHOQUE</td><td class="tooltipstered">Agente (0:02:44) | 111557616871 (NO PROCESADO)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: gray; color: white; cursor: pointer;"><td class="tooltipstered">1238 - LEONELA VALENTINA, PAGLIANO</td><td class="tooltipstered">Logueado (0:00:10)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: gray; color: white; cursor: pointer;"><td class="tooltipstered">1499 - AYUB SALMA, JURI</td><td class="tooltipstered">Logueado (0:00:18)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">1575 - BRENDA JENNIFER, GARCES</td><td class="tooltipstered">Agente (0:00:05) | 261155101992 (NO PROCESADO)</td><td class="tooltipstered">104 - DERIVACION MENDOZA PORTABILIDAD (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">1591 - ANABELA MAGALI, PAGLIANO</td><td class="tooltipstered">Agente (0:00:02) | 264155889603 (NO PROCESADO)</td><td class="tooltipstered">104 - DERIVACION MENDOZA PORTABILIDAD (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">1679 - DANIEL, DAUVERNE</td><td class="tooltipstered">Agente (0:00:22) | 260154361661 (NO PROCESADO)</td><td class="tooltipstered">104 - DERIVACION MENDOZA PORTABILIDAD (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">1730 - MELISA, JAQUE</td><td class="tooltipstered">Agente (0:17:36) | 225715589311 (NO PROCESADO)</td><td class="tooltipstered">133 - DERIVACION CABA PORTABILIDAD (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">1851 - EDGAR GABRIEL, AGUILERA </td><td class="tooltipstered">Agente (0:03:42) | 263154684625 (NO PROCESADO)</td><td class="tooltipstered">157 - SOLO PINGING MZA (Manual) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: gray; color: white; cursor: pointer;"><td class="tooltipstered">1903 - MELISA, SILVA</td><td class="tooltipstered">Logueado (0:00:10)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">1942 - LUIS GABRIEL, MENDEZ </td><td class="tooltipstered">Agente (0:00:14) | 111540618643 (NO PROCESADO)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">1994 - Patricia Belen, Paez Palacios</td><td class="tooltipstered">Agente (0:00:21) | 1140309721 (RECICLADO AUTOMAT. (SIN DATOS))</td><td class="tooltipstered">158 - DERIVACION BSAS CLARO (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2021 - NICOLE ANTONELA, QUIROGA</td><td class="tooltipstered">Agente (0:00:02) | 111562120711 (NO PROCESADO)</td><td class="tooltipstered">122 - DERIVACION BASE +$20.000 (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2035 - LUIS DAMIAN, GAITE</td><td class="tooltipstered">Agente (0:02:11) | 1126345782 (NO PROCESADO)</td><td class="tooltipstered">158 - DERIVACION BSAS CLARO (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2041 - MELANIE BELEN, ALIAGA</td><td class="tooltipstered">Agente (0:10:20) | 1161544430 (N/A)</td><td class="tooltipstered">1 - LLAMADOS MANUALES (Manual) | N/A</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2042 - MARCO ALEN , GAIDO</td><td class="tooltipstered">Agente (0:06:30) | 1153867579 (NO PROCESADO)</td><td class="tooltipstered">158 - DERIVACION BSAS CLARO (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: gray; color: white; cursor: pointer;"><td class="tooltipstered">2050 - Aldana, Martinez</td><td class="tooltipstered">Logueado (0:00:17)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: gray; color: white; cursor: pointer;"><td class="tooltipstered">2054 - Camila, Torres</td><td class="tooltipstered">Logueado (0:00:14)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2093 - MARIA BERNARDA, LLINAS </td><td class="tooltipstered">Agente (0:00:04) | 264155720859 (NO PROCESADO)</td><td class="tooltipstered">104 - DERIVACION MENDOZA PORTABILIDAD (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: gray; color: white; cursor: pointer;"><td class="tooltipstered">2110 - INGRID NOELI, BOLDIZ</td><td class="tooltipstered">Logueado (0:00:05)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2165 - FEDERICA, REARTES</td><td class="tooltipstered">Agente (0:00:02) | 2616151379 (N/A)</td><td class="tooltipstered">1 - LLAMADOS MANUALES (Manual) | N/A</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2176 - FLORENCIA NAHIR, PIASER ROCO</td><td class="tooltipstered">Agente (0:00:19) | 111559367745 (NO PROCESADO)</td><td class="tooltipstered">135 - DERIVACION DATOS +120 SEGUNDOS (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2180 - SOFIA MIRTA, EGUIS</td><td class="tooltipstered">Agente (0:00:07) | 111563363488 (NO PROCESADO)</td><td class="tooltipstered">145 - DERIVACION SIN PERMANENCIA (Predictivo) | 48 - DERIVACION PORTABILIDAD</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2205 - FRANCO, NARVAEZ</td><td class="tooltipstered">Agente (0:00:44) | 228415306127 (NO PROCESADO)</td><td class="tooltipstered">136 - DERIVACIÓN BASE HERACLES (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: lightblue; color: white; cursor: pointer;"><td class="tooltipstered">2235 - CELESTE, AGUIRRE</td><td class="tooltipstered">Ringing (0:00:02) | 297155151596 (NO PROCESADO)</td><td class="tooltipstered">136 - DERIVACIÓN BASE HERACLES (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: gray; color: white; cursor: pointer;"><td class="tooltipstered">2240 - LUZ, VARGAS</td><td class="tooltipstered">Logueado (0:00:17)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2272 - ANTONELLA LOURDES, MALLEA CLAVEL</td><td class="tooltipstered">Agente (0:00:33) | 261152571591 (NO PROCESADO)</td><td class="tooltipstered">104 - DERIVACION MENDOZA PORTABILIDAD (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2273 - ALEJANDRA SOLEDAD, LUCERO</td><td class="tooltipstered">Agente (0:00:58) | 264615062848 (NO PROCESADO)</td><td class="tooltipstered">104 - DERIVACION MENDOZA PORTABILIDAD (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2277 - JUAN FRANCISCO, SANTAOLAYA</td><td class="tooltipstered">Agente (0:00:01) | 111536507202 (NO PROCESADO)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2291 - SABRINA ABIGAIL , HIDALGO SOLORZA</td><td class="tooltipstered">Agente (0:00:01) | 111537616518 (NO PROCESADO)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2318 - LOURDES MACARENA, MUÑOZ </td><td class="tooltipstered">Agente (0:00:02) | 111528708145 (NO PROCESADO)</td><td class="tooltipstered">122 - DERIVACION BASE +$20.000 (Predictivo) | 58 - DERIVACION PORTABILIDAD - ACADEMIA</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: gray; color: white; cursor: pointer;"><td class="tooltipstered">2330 - MELANIE ANTONELLA, BERNARDEAU </td><td class="tooltipstered">Logueado (0:00:11)</td><td class="tooltipstered">N/A (N/A) | N/A</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: gray; color: white; cursor: pointer;"><td class="tooltipstered">2351 - MOIRA, OCAMPO</td><td class="tooltipstered">Logueado (0:00:18)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: blue; color: white; cursor: pointer;"><td class="tooltipstered">2362 - AGUSTINA, CRUZ CARMONA</td><td class="tooltipstered">Agente (0:18:01) | 111528278792 (NO PROCESADO)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROW" style="z-index: 15000; background-color: gray; color: white; cursor: pointer;"><td class="tooltipstered">2370 - ABIGAIL, MANSILLA</td><td class="tooltipstered">Logueado (0:00:09)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr><tr class="GRIDROWALTERNATE" style="z-index: 15000; background-color: gray; color: white; cursor: pointer;"><td class="tooltipstered">2371 - SOFIA VERONICA, MENDEZ CAÑADAS</td><td class="tooltipstered">Logueado (0:00:18)</td><td class="tooltipstered">50 - PREDICTIVO PORTABILIDAD (Predictivo) | N/A</td></tr></tbody></table><span id="grid1" class="EMPTYROW" style="display:inline-block;width:0px;TOP:0;position:absolute;left:0;">.</span></div><div class="ui-resizable-handle ui-resizable-e" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-s" style="z-index: 90;"></div><div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se" style="z-index: 90;"></div></div></div>
+            </td>
+        </tr>
+    </tbody></table>
+    <div id="cntParameters" style="position: fixed; right: 0px; border: none; width: 760px;
+        height: 443px; display: none; z-index: 999999" class="ui-draggable ui-draggable-handle">
+        <div id="Div1" class="userNameContainerBorder" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 30px;
+             cursor: move;">
+            <span id="lblParametersTitle" class="PARAMETERTITLE">Parámetros</span>
+            <a onclick="javascript:$('#cntParameters').slideUp(500);" class="tooltipstered">
+                <img alt="" src="images/minimize-arrow.png" style="position: absolute; right: 3px;
+                    top: 3px; width: 27px; height: 27px; cursor: pointer; cursor: hand;" id="imgParametersMinimize">
+            </a>
+        </div>
+        <div id="containerParmeters" style="position: absolute; top: 30px; left: 0px">
+            <iframe src="ControlBoards_Custom_Test.aspx?TIPOACCION=EJ&amp;INTEGRADOS=S&amp;PARAMETERS=true" id="iframeParameters" style="border: none; width: 760px;
+                height: 435px"></iframe>
+        </div>
+    </div>
+
+
+    <button onclick=" if (! btnParametrosValidar(false,'Todos')) return false; else {if (eval(document.getElementById('btnParametros').autodesHabilitar.toString())) setTimeout(&quot;document.getElementById('btnParametros').disabled = true;&quot;,100); setTimeout(&quot;btnParametros_Click();&quot;,200);}" controlestovalidate="Todos" autodeshabilitar="false" type="button" name="btnParametros" value="" id="btnParametros" accesskey="X" tabindex="504" class="BOTON far_fa-sliders-h BOTONPARAM2 BUTTONREADY tooltipstered" tooltip2="" style="cursor: pointer; height: 29px; width: 92px; z-index: 101; top: 0px; left: 0px; position: fixed; font-size: 17px; border-top-right-radius: 0px !important; border-top-left-radius: 0px !important; display: none;"><i class="far fa-sliders-h tooltipstered"></i> </button>
+    <input name="txtCrm" type="text" id="txtCrm" style="display: none">
+    <input name="txtTituloVentana" type="text" value="Monitor de usuarios" id="txtTituloVentana" style="display: none">
+    
+    <script type="text/javascript" language="javascript"></script>
+    <script type="text/javascript" language="javascript">
+        var caller = window.opener;
+
+
+        $(function () {
+            if (typeof AjaxPro != 'undefined' && AjaxPro && AjaxPro.Request && AjaxPro.Request.prototype) {
+                AjaxPro.Request.prototype.doStateChange = function () {
+                    this.onStateChanged(this.xmlHttp.readyState, this);
+                    if (this.xmlHttp.readyState != 4 || !this.isRunning) {
+                        return;
+                    }
+                    this.duration = new Date().getTime() - this.__start;
+                    if (this.timeoutTimer != null) {
+                        clearTimeout(this.timeoutTimer);
+                    }
+                    var res = this.getEmptyRes();
+                    if (this.xmlHttp.status == 200 && (this.xmlHttp.statusText == "OK" || !this.xmlHttp.statusText)) {
+                        res = this.createResponse(res);
+                    } else {
+                        res = this.createResponse(res, true);
+                        res.error = { Message: this.xmlHttp.statusText, Type: "ConnectFailure", Status: this.xmlHttp.status };
+                    }
+                    this.endRequest(res);
+                };
+            }
+        });
+
+
+
+        if (caller == undefined)
+            caller = parent;
+
+        function showDrillDown(idTablero, titulo, paramAdic_Name, paramAdic_Value) {
+            var paramnames = document.paramnames;
+            var paramvalues = document.paramvalues;
+
+            for (var i = 2; i < arguments.length; i++) {
+                paramnames += ((paramnames != '') ? '|' : '') + arguments[i];
+                i++
+                paramvalues += ((paramvalues != '') ? '|' : '') + arguments[i];
+            }
+
+            titulo = getStringResource(titulo);
+
+            var response = ECRM.ControlBoards_Custom_Test_PoupUp.showDrillDown(idTablero, titulo, paramnames, paramvalues);
+
+            if (response.error != null) {
+                messageErrorResponse(response);
+            }
+            else {
+                showBoardPoupUp(titulo, parseFloat(response.value.split("|")[0]), parseFloat(response.value.split("|")[1]));
+            }
+        }
+
+        function showBoardPoupUp(titulo, ancho, alto) {
+            var drillDownLevel = document.location.search.split("&")[1].split("=")[1];
+            caller.document.showBoardPoupUp(titulo, ancho, alto, true, drillDownLevel);
+        }
+
+
+        function gridsSetPercentageSize() {
+            var grids = $('div[id$="_cnt_rows"]')
+            for (var i = 0; i < grids.length; i++) {
+                var id = $(grids[i]).attr("id").split("_")[0];
+                $(String.format('div[id^="{0}_"]', id)).wrapAll(String.format("<div id='{0}_div' style='position:absolute' class='gridContainer'></div>", id));
+                var titulo = $(String.format("#{0}_titulo", id));
+                var gridWrap = $(String.format("#{0}_div", id));
+                gridWrap.resizable();
+                gridWrap.draggable({ cancel: String.format("#{0}_cnt_rows", id) });
+                var gridCntTiles = $(String.format("#{0}_cnt_titles", id));
+                var gridCntRows = $(String.format("#{0}_cnt_rows", id));
+                var gridRegCount = $(String.format("#{0}_regCountCnt", id));
+                var gridReferences = $(String.format("#{0}_references", id));
+                var titleRow = $(String.format("#{0}_titleRow", id));
+                var titleRowCols = $(String.format("#{0}_titleRow td", id));
+
+
+                gridCntRows.css("overflow-x", "auto");
+
+                var top = 0;
+                var tituloHeight = 0;
+                if (titulo.length == 1) {
+                    top = parseInt(titulo.css("top").replace("px"));
+                    tituloHeight = titulo.height();
+                }
+                else {
+                    top = parseInt(gridCntTiles.css("top").replace("px"));
+                }
+
+
+                var width = gridReferences.width();
+                var referencesHeight = gridReferences.height();
+                var gridRegCountHeight = gridRegCount.height();
+                var gridCntTilesHeight = gridCntTiles.height();
+
+                gridWrap.width(width);
+                gridWrap.height(gridReferences.height() + parseInt(gridReferences.css("top").replace("px", "")) - top);
+                var left = parseInt(gridReferences.css("left").replace("px", ""));
+                gridWrap.css("top", top);
+                gridWrap.css("left", left);
+                titulo.css("top", "0px");
+                titulo.css("left", "0px");
+
+                var aWidths = eval(String.format("document.{0}_WIDTH", id));
+
+                var columnsTotalWidth = 0;
+
+                for (var j = 0; j < aWidths.length; j++) {
+                    columnsTotalWidth += parseInt(aWidths[j]);
+                }
+
+                var totalPercentage = 0;
+
+                for (var j = 0; j < aWidths.length; j++) {
+                    var colWidth = parseInt(parseInt(aWidths[j]));
+                    var percentage = parseInt((colWidth * 100) / columnsTotalWidth)
+                    totalPercentage += percentage;
+
+                    if (j == (aWidths.length - 1)) {
+                        percentage += (100 - totalPercentage);
+                    }
+
+                    $(titleRowCols[j]).css("width", percentage + "%");
+
+                    $(titleRowCols[j]).css("min-width", aWidths[j] + "px");
+                }
+
+
+                $(String.format("#{0}_titles", id)).css("width", "100%");
+                $(String.format("#{0}_rows", id)).css("width", "100%");
+                $(String.format("#{0}_titulo", id)).css("width", "100%");
+
+                gridCntTiles.css("width", "calc(100% + 2px)");
+                gridCntTiles.css("left", "0px");
+                gridCntRows.css("width", "100%");
+                gridCntRows.css("left", "0px");
+                gridReferences.css("width", "100%");
+                gridReferences.css("top", "");
+                gridReferences.css("bottom", "0px");
+                gridReferences.css("left", "0px");
+                gridRegCount.css("width", "100%");
+                gridRegCount.css("top", "");
+                gridRegCount.css("left", "0px");
+                gridRegCount.css("bottom", referencesHeight + "px");
+                gridCntTilesTop = parseInt(gridCntTiles.css("top").replace("px", ""));
+                gridCntTiles.css("top", gridCntTilesTop - top);
+
+                gridCntRows.css("height", "calc(100% - " + (tituloHeight + referencesHeight + gridRegCountHeight + gridCntTilesHeight) + "px)");
+
+                gridCntRowsTop = parseInt(gridCntRows.css("top").replace("px", ""));
+                gridCntRows.css("top", gridCntRowsTop - top);
+
+                gridCntTiles.css("min-width", "");
+
+            }
+
+            $(".gridContainer").css("background", $(".GRIDTITLE").css("background"));
+            $("div[id$='_regCountCnt']").css("background", $(".GRID").css("background"));
+            $("div[id$='_references']").css("background", $(".GRID").css("background"));
+
+            
+        }
+
+
+
+        function valuesSetPercentageSize() {
+            var values = $('div[id^="cntValue"]')
+            for (var i = 0; i < values.length; i++) {
+                var id = $(values[i]).attr("id");
+                var cnt = $("#" + id);
+
+                cnt.resizable();
+                cnt.draggable();
+                cnt.addClass("contateinerValue");
+
+                var tit = $("#" + id.replace("cntValue", "tit"));
+                var lbl = $("#" + id.replace("cntValue", "lbl"));
+                var leftLbl = parseInt(lbl.css("left").replace("px", ""));
+                var topLbl = parseInt(lbl.css("top").replace("px", ""));
+                var leftTit = parseInt(tit.css("left").replace("px", ""));
+                var topTit = parseInt(tit.css("top").replace("px", ""));
+                var tdTitId = id.replace("cntValue", "tdTit");
+                var tdLblId = id.replace("cntValue", "tdLbl");
+
+                tit.wrap(String.format("<td id='{0}'></td>", tdTitId));
+                lbl.wrap(String.format("<td id='{0}'></td>", tdLblId));
+
+                var orientacion = eval("document." + id)
+
+                if (orientacion == undefined) {
+                    if (topLbl > topTit)
+                        orientacion = "TOP";
+                    else if (leftLbl > leftTit)
+                        orientacion = "LEFT";
+                    else if (topLbl < topTit)
+                        orientacion = "BOTTOM";
+                    else if (leftLbl < leftTit)
+                        orientacion = "RIGHT";
+                }
+
+                orientacion = orientacion.toUpperCase();
+
+                var border;
+                var borderDef
+                var strBorder
+
+                strBorder = "border-left"
+                border = tit.css(strBorder)
+                if (border != "") {
+                    borderDef = border;
+                    tit.css(strBorder, "");
+                }
+
+                border = lbl.css(strBorder)
+                if (border != "") {
+                    borderDef = border;
+                    lbl.css(strBorder, "");
+                }
+
+                strBorder = "border-top"
+                border = tit.css(strBorder)
+                if (border != "") {
+                    borderDef = border;
+                    tit.css(strBorder, "");
+                }
+
+                border = lbl.css(strBorder)
+                if (border != "") {
+                    borderDef = border;
+                    lbl.css(strBorder, "");
+                }
+
+
+                strBorder = "border-bottom"
+                border = tit.css(strBorder)
+                if (border != "") {
+                    borderDef = border;
+                    tit.css(strBorder, "");
+                }
+
+                border = lbl.css(strBorder)
+                if (border != "") {
+                    borderDef = border;
+                    lbl.css(strBorder, "");
+                }
+
+                strBorder = "border-right"
+                border = tit.css(strBorder)
+                if (border != "") {
+                    borderDef = border;
+                    tit.css(strBorder, "");
+                }
+
+                border = lbl.css(strBorder)
+                if (border != "") {
+                    borderDef = border;
+                    lbl.css(strBorder, "");
+                }
+
+
+
+                tit.css("width", "100%");
+                lbl.css("width", "100%");
+
+                tit.css("height", "100%");
+                lbl.css("height", "100%");
+
+                tit.css("display", "inline-block");
+                lbl.css("display", "inline-block");
+
+
+
+                if (orientacion == "TOP") {
+                    //$("#" + id + " td")
+                    $("#" + tdTitId).wrap("<tr></tr>");
+                    $("#" + tdLblId).wrap("<tr></tr>");
+                    $("#" + id + " tr").wrapAll(String.format("<table class='tableValue' style='width:100%;height:100%;border:{0}' ></table>", borderDef));
+                }
+
+
+                if (orientacion == "BOTTOM") {
+                    //$("#" + id + " td")
+                    $("#" + tdTitId).wrap("<tr></tr>");
+                    $("#" + tdLblId).wrap("<tr></tr>");
+                    $("#" + id + " tr").wrapAll(String.format("<table class='tableValue' style='width:100%;height:100%;border:{0}' ></table>", borderDef));
+                    var curr = $($("#" + id + " tr")[0]);
+                    curr.parent().prepend(curr);
+                }
+
+                if (orientacion == "LEFT") {
+                    $("#" + id + " td").wrapAll("<tr></tr>");
+                    $("#" + id + " tr").wrapAll(String.format("<table class='tableValue' style='width:100%;height:100%;border:{0}' ></table>", borderDef));
+                    tit.css("display", "inherit");
+                    lbl.css("display", "inherit");
+                }
+
+                if (orientacion == "RIGHT") {
+                    //$("#" + id + " td")
+                    $("#" + id + " td").wrapAll("<tr></tr>");
+                    $("#" + id + " tr").wrapAll(String.format("<table class='tableValue' style='width:100%;height:100%;border:{0}' ></table>", borderDef));
+                    tit.css("display", "inherit");
+                    lbl.css("display", "inherit");
+                }
+
+                var oldHeight = cnt.height();
+                var oldWidth = cnt.width();
+
+                cnt.css("height", "auto");
+                cnt.css("min-height", cnt.height());
+                cnt.css("width", "auto");
+                cnt.css("min-width", cnt.width());
+                cnt.css("width", oldWidth + "px");
+            }
+        }
+
+        function chartSetPercentageSize() {
+            $('div[id^="chartdiv"]').addClass("chartContainer");
+            $(".chartContainer").resizable();
+            $(".chartContainer").draggable();
+
+        }
+
+
+        $(document).ready(function () {
+
+            if (window.opener && window.opener !== window) {
+                $("#btnParametros").css("display", "none");
+            }
+
+            $("#iframeParameters").attr("src", "ControlBoards_Custom_Test.aspx?TIPOACCION=EJ&INTEGRADOS=S&PARAMETERS=true");
+            $("#cntParameters").height(parseInt(getUrlParameter("altoParametros")));
+            $("#cntParameters").draggable();
+            gridsSetPercentageSize();
+            valuesSetPercentageSize();
+            chartSetPercentageSize();
+
+            startInterval();
+        });
+
+        function startInterval() {
+            setInterval("onInterval()", 1000);
+            $('head').append(String.format('<link rel="stylesheet" href="css/tablero_{0}.css" type="text/css" />', document.scorecardid));
+        }
+
+        function onInterval() {
+            
+            var execute = !document.hidden && (parent.document.checkActiveTab == undefined || parent.document.checkActiveTab($("#txtTituloVentana").val()));
+
+            for (var i = 0; i < document.charts.split(",").length; i++) {
+                var strChartid = document.charts.split(",")[i];
+                var chartObjDomElement = document.getElementById(strChartid);
+
+                if (chartObjDomElement.currentHeight == undefined) {
+                    chartObjDomElement.currentWidth = $(chartObjDomElement).width();
+                    chartObjDomElement.currentHeight = $(chartObjDomElement).height();
+                }
+
+                document.scorecardid = chartObjDomElement.scorecardid;
+                if (isFirefox && !$(chartObjDomElement).is(":visible")) {
+                    chartObjDomElement.nextExecution = new Date();
+                }
+
+                if (execute && $(chartObjDomElement).is(":visible") && (chartObjDomElement.nextExecution < (new Date()) || chartObjDomElement.currentWidth != $(chartObjDomElement).width() || chartObjDomElement.currentHeight != $(chartObjDomElement).height()) && chartObjDomElement.executing == 0) {
+
+                    chartObjDomElement.currentWidth = $(chartObjDomElement).width();
+                    chartObjDomElement.currentHeight = $(chartObjDomElement).height();
+
+                    if (chartObjDomElement.method == "GetDataXML") {
+                        chartidDataXML = chartObjDomElement.chartid;
+                        scorecardidDataXML = chartObjDomElement.scorecardid;
+                        windowidDataXML = chartObjDomElement.windowid;
+                        typeDataXML = chartObjDomElement.type;
+                        spname_initDataXML = chartObjDomElement.spname_init;
+                        spname_updateDataXML = chartObjDomElement.spname_update;
+                        paramnamesDataXML = document.paramnames;
+                        paramvaluesDataXML = document.paramvalues;
+                        refreshinterval = chartObjDomElement.refreshinterval;
+                        firstExecuting = chartObjDomElement.firstExecuting;
+
+                        var chartObj = getChartFromId('chartid' + chartidDataXML);
+                        if (chartObj == undefined) {
+                            refreshSubReports(true);
+                            return;
+                        }
+                        if ((typeof (chartObj.setDataXML) == "function")) {
+                            chartObjDomElement.executing = 1;
+                            if (refreshinterval != 0)
+                                chartObjDomElement.nextExecution = (new Date()).dateAdd("s", refreshinterval);
+                            else
+                                chartObjDomElement.nextExecution = (new Date()).dateAdd("y", 20);
+
+
+                            if (spname_initDataXML == spname_updateDataXML || spname_updateDataXML == '' || spname_updateDataXML == '__0' || !firstExecuting) {
+                                ECRM.ControlBoards_Custom_Test_PoupUp.GetDataXML(scorecardidDataXML, chartidDataXML, windowidDataXML, typeDataXML, spname_initDataXML, paramnamesDataXML, paramvaluesDataXML, function (response, chartidDataXML) {
+                                    getDataXML_callback(response, arguments[1].args.chartid);
+                                });
+                            }
+                            else {
+                                ECRM.ControlBoards_Custom_Test_PoupUp.GetData(scorecardidDataXML, chartidDataXML, windowidDataXML, typeDataXML, spname_updateDataXML, paramnamesDataXML, paramvaluesDataXML, function (response, chartidDataXML) {
+                                    getData_callback(response, arguments[1].args.chartid);
+                                });
+                            }
+                        }
+                    } else if (chartObjDomElement.method == "GetValueData") {
+
+                        chartidValueData = chartObjDomElement.chartid;
+                        scorecardidValueData = chartObjDomElement.scorecardid;
+                        windowidValueData = chartObjDomElement.windowid;
+                        spname_initValueData = chartObjDomElement.spname_init;
+                        paramnamesValueData = document.paramnames;
+                        paramvaluesValueData = document.paramvalues;
+                        refreshinterval = chartObjDomElement.refreshinterval;
+                        chartObjDomElement.executing = 1;
+                        if (refreshinterval != 0)
+                            chartObjDomElement.nextExecution = (new Date()).dateAdd("s", refreshinterval);
+                        else
+                            chartObjDomElement.nextExecution = (new Date()).dateAdd("y", 20);
+
+                        ECRM.ControlBoards_Custom_Test_PoupUp.GetValueData(scorecardidValueData, chartidValueData, windowidValueData, spname_initValueData, paramnamesValueData, paramvaluesValueData, function (response) {
+                            GetValueData_callback(response, arguments[1].args.chartid);
+                        });
+                    } else if (chartObjDomElement.method == "GetGridData") {
+
+                        chartidGridData = chartObjDomElement.chartid;
+                        scorecardidGridData = chartObjDomElement.scorecardid;
+                        windowidGridData = chartObjDomElement.windowid;
+                        spname_initGridData = chartObjDomElement.spname_init;
+                        paramnamesGridData = document.paramnames;
+                        paramvaluesGridData = document.paramvalues;
+                        refreshinterval = chartObjDomElement.refreshinterval;
+                        chartObjDomElement.executing = 1;
+                        if (refreshinterval != 0)
+                            chartObjDomElement.nextExecution = (new Date()).dateAdd("s", refreshinterval);
+                        else
+                            chartObjDomElement.nextExecution = (new Date()).dateAdd("y", 20);
+
+                        ECRM.ControlBoards_Custom_Test_PoupUp.GetGridData(scorecardidGridData, chartidGridData, windowidGridData, spname_initGridData, paramnamesGridData, paramvaluesGridData, function (response) {
+                            GetGridData_callback(response, arguments[1].args.chartid);
+                        });
+                    }
+                }
+                else if ($(chartObjDomElement).is(":visible") && chartObjDomElement.nextExecution < (new Date()) && chartObjDomElement.executing > 0) {
+                    chartObjDomElement.executing += 1;
+                    if (chartObjDomElement.executing > 3) {
+                        chartObjDomElement.executing = 0;
+                    }
+                }
+            }
+        }
+
+        function getDataXML(scorecardid, chartid, windowid, type, spname_init, spname_update, paramnames, paramvalues, refreshinterval) {
+            var strChartElement = "chartdiv" + chartid;
+
+            if (document.charts == undefined)
+                document.charts = strChartElement;
+            else
+                document.charts += "," + strChartElement;
+
+            var chartObj = document.getElementById(strChartElement);
+            chartObj.method = "GetDataXML";
+            chartObj.scorecardid = scorecardid;
+            chartObj.chartid = chartid;
+            chartObj.windowid = windowid;
+            chartObj.type = type;
+            chartObj.spname_init = spname_init;
+            chartObj.spname_update = spname_update;
+            chartObj.paramnames = paramnames;
+            chartObj.paramvalues = paramvalues;
+            chartObj.refreshinterval = refreshinterval;
+            chartObj.nextExecution = (new Date());
+            chartObj.executing = 0;
+            chartObj.firstExecuting = false;
+        }
+
+        function getDataXML_callback(response, chartid) {
+            if (response.error != null) {
+                alert(response.error.Type + ': ' + response.error.Message);
+                return;
+            }
+
+            if (response.value != null && response.value != '') {
+                var chartObj = getChartFromId('chartid' + chartid);
+                var strChartElement = "chartdiv" + chartid;
+                if ((typeof (chartObj.setDataXML) == "function")) {
+                    chartObj.setDataXML(response.value);
+                }
+                document.getElementById(strChartElement).executing = 0;
+                document.getElementById(strChartElement).firstExecuting = true;
+            }
+        }
+
+
+        function getData_callback(response, chartid) {
+            if (response.error != null) {
+                alert(response.error.Type + ': ' + response.error.Message);
+                return;
+            }
+            if (response.value != null && response.value != '') {
+                var chartObj = getChartFromId('chartid' + chartid);
+                var strChartElement = "chartdiv" + chartid;
+                if ((typeof (chartObj.feedData) == "function")) {
+                    chartObj.feedData(response.value);
+                }
+                document.getElementById(strChartElement).executing = 0;
+            }
+        }
+
+
+
+        function GetValueData(scorecardid, chartid, windowid, spname_init, paramnames, paramvalues, refreshinterval) {
+            var strChartElement = "cntValue" + chartid
+
+            if (document.charts == undefined)
+                document.charts = strChartElement;
+            else
+                document.charts += "," + strChartElement;
+
+            var chartObj = document.getElementById(strChartElement);
+            chartObj.method = "GetValueData";
+            chartObj.scorecardid = scorecardid;
+            chartObj.chartid = chartid;
+            chartObj.windowid = windowid;
+            chartObj.spname_init = spname_init;
+            chartObj.paramnames = paramnames;
+            chartObj.paramvalues = paramvalues;
+            chartObj.refreshinterval = refreshinterval;
+            chartObj.nextExecution = (new Date());
+            chartObj.executing = 0;
+        }
+
+        function GetValueData_callback(response, chartid) {
+            if (response.error != null) {
+                alert(response.error.Type + ': ' + response.error.Message);
+                return;
+            }
+            if (response.value != null && response.value != '') {
+
+                var lbl = document.getElementById("lbl" + chartid);
+                setText(lbl, response.value.Tables[0].Rows[0].VALOR);
+
+                var names = eval("document.lbl" + chartid + ".split(',')");
+
+                if (names != '') {
+                    for (i = 0; i < names.length; i++) {
+                        try {
+                            var expresion = "lbl.style." + names[i].Replace("_", "") + " = response.value.Tables[0].Rows[0]." + names[i] + ";";
+                            eval(expresion);
+                        }
+                        catch (ex) {
+                        }
+                    }
+                }
+
+                lbl = document.getElementById("tit" + chartid);
+                setText(lbl, response.value.Tables[1].Rows[0].TITULO);
+
+                var names = eval("document.lbl" + chartid + ".split(',')");
+
+                if (names != '') {
+                    for (i = 0; i < names.length; i++) {
+                        try {
+                            var expresion = "lbl.style." + names[i].Replace("_", "") + " = response.value.Tables[1].Rows[0]." + names[i] + ";";
+                            eval(expresion);
+                        }
+                        catch (ex) {
+                        }
+
+                    }
+                }
+
+                document.getElementById("cntValue" + chartid).executing = 0;
+            }
+        }
+
+
+
+        function GetGridData(scorecardid, chartid, windowid, spname_init, paramnames, paramvalues, refreshinterval) {
+
+            var strChartElement = "grid" + chartid + "_cnt_rows"
+
+            if (document.charts == undefined)
+                document.charts = strChartElement;
+            else
+                document.charts += "," + strChartElement;
+
+            var chartObj = document.getElementById(strChartElement);
+            chartObj.method = "GetGridData";
+            chartObj.scorecardid = scorecardid;
+            chartObj.chartid = chartid;
+            chartObj.windowid = windowid;
+            chartObj.spname_init = spname_init;
+            chartObj.paramnames = paramnames;
+            chartObj.paramvalues = paramvalues;
+            chartObj.refreshinterval = refreshinterval;
+            chartObj.nextExecution = (new Date());
+            chartObj.executing = 0;
+        }
+
+        function GetGridData_callback(response, chartid) {
+
+            var strChartElement = "grid" + chartid + "_cnt_rows";
+
+            if (response.error != null) {
+                alert(response.error.Type + ': ' + response.error.Message);
+                return;
+            }
+            if (response.value != null && response.value != '') {
+                var grid = document.getElementById('grid' + chartid);
+                grid.fill(response.value.Tables[3]);
+
+                document.getElementById(strChartElement).executing = 0;
+
+                if (document.getElementById('grid' + chartid + '_lblTitulo') != null) {
+                    try {
+                        setText(document.getElementById('grid' + chartid + '_lblTitulo'), getStringResource(response.value.Tables[0].Rows[0].TITULO));
+                    }
+                    catch (err) {
+                    }
+                }
+            }
+        }
+
+
+
+        function GetGoogleMapData(scorecardid, chartid, windowid, spname_init, paramnames, paramvalues, refreshinterval) {
+            ECRM.ControlBoards_Custom_Test_PoupUp.GetGoogleMapData(scorecardid, chartid, windowid, spname_init, paramnames, paramvalues, function (response) {
+                GetGoogleMapData_callback(response, scorecardid, chartid, windowid, spname_init, paramnames, paramvalues, refreshinterval);
+            });
+        }
+
+        function GetGoogleMapData_callback(response, scorecardid, chartid, windowid, spname_init, paramnames, paramvalues, refreshinterval) {
+            if (response.error != null) {
+                alert(response.error.Type + ': ' + response.error.Message);
+                return;
+            }
+            if (response.value != null && response.value != '') {
+
+                codeMultiCoordenates('googleMap' + chartid, response.value.Tables[1], response.value.Tables[0].Rows[0].ZOOM);
+
+            }
+            if (refreshinterval == 0)
+                return;
+            else {
+                if (eval("document.interval" + chartid.toString()) == null) {
+                    var interval = setInterval('GetGoogleMapData(' + scorecardid + ', ' + chartid + ', ' + windowid + ', "' + spname_init + '", "' + paramnames + '", "' + paramvalues + '", ' + refreshinterval + ')', refreshinterval * 1000);
+                    eval("document.interval" + chartid.toString() + " = " + interval.toString());
+                }
+            }
+        }
+
+
+        $("#cntParametros .ETIQUETA").addClass("label");
+        $(".CONTENEDOR").removeClass("CONTENEDOR");
+
+        function btnParametros_Click() {
+            showParameters();
+        }
+
+        function showParameters() {
+            var cntParameters = $('#cntParameters');
+            var cntFrame = $("#iframeParameters").contents().find("#Frame").contents().find("#cntFrame")
+            if (!cntParameters.is(':visible')) {
+
+                let height = cntFrame.css("height");
+                if (isChrome) {
+                    cntParameters.css('height', (parseInt(height) + 152) + "px");
+                }
+                height = parseInt(cntParameters.css('height').replace('px', ''));
+                cntParameters.css('left', '');
+                cntParameters.css('top', '');
+                cntParameters.css('bottom', (height * -1) + 'px');
+                cntParameters.css('display', 'block');
+                cntParameters.css('right', '0px');
+
+                cntParameters.animate({ 'bottom': '10px' }, 500, function () { showParameters_Callback(); });
+
+            }
+        }
+
+        function showParameters_Callback() {
+            if (!isChrome) {
+                var cntFrame = $("#iframeParameters").contents().find("#Frame").contents().find("#cntFrame")
+                let height = cntFrame.css("height");
+                var cntParameters = $('#cntParameters');
+                cntParameters.css('height', (parseInt(height) + 152) + "px");
+                cntFrame.css("bottom", "82px");
+            }
+            $("#iframeParameters").contents().find("#Frame").css("position", "absolute");
+            setTimeout('$("#iframeParameters").contents().find("#Frame").css("position", "relative");', 200);
+        }
+
+    </script>
+    <style type="text/css">
+        .GRIDTITLE
+        {
+            padding-right: 0px !important;
+            padding-left: 0px !important;
+        }
+    </style>
+    <input name="___potBackText" type="text" onchange="javascript:setTimeout('__doPostBack(\'___potBackText\',\'\')', 0)" onkeypress="if (WebForm_TextBoxKeyHandler(event) == false) return false;" id="___potBackText" style="display:none;visibility:hidden;"><input name="___Claves" type="text" value="¦¦¦" onchange="javascript:setTimeout('__doPostBack(\'___Claves\',\'\')', 0)" onkeypress="if (WebForm_TextBoxKeyHandler(event) == false) return false;" id="___Claves" style="display:none;visibility:hidden;">
+<script type="text/javascript">
+//<![CDATA[
+var Page_ValidationSummaries =  new Array(document.getElementById("vs"));
+//]]>
+</script>
+
+<script type="text/javascript">
+//<![CDATA[
+var vs = document.all ? document.all["vs"] : document.getElementById("vs");
+vs.showmessagebox = "True";
+vs.showsummary = "False";
+vs.displaymode = "List";
+//]]>
+</script>
+
+
+<script type="text/javascript">
+//<![CDATA[
+document.title = 'Monitor de usuarios (1)';
+//]]>
+</script>
+<script defer="">
+
+registrarObjeto('grid1', 'grd', '', '', '', '', '0', 'CONTACTO', 0, '', '', '');
+
+
+</script>
+<script defer="">
+registrarAjaxGrid('grid1',false,false,'','true');
+</script><script defer="">
+
+document.grid1 = new Array(2);
+document.grid1_ALIGN = new Array(2);
+document.grid1_WIDTH = new Array(2);
+document.grid1_PRG = new Array(2);
+document.grid1_ControlAsoc = new Array(2);
+document.grid1[0] = 'USUARIO_DESCRIP_LONG';
+document.grid1_ALIGN[0] = 'LEFT';
+document.grid1_WIDTH[0] = '140';
+document.grid1_ControlAsoc[0] = 'USUARIO_DESCRIP_LONG';
+document.grid1_PRG[0] = 'N';
+document.grid1[1] = 'POSICION_INFO';
+document.grid1_ALIGN[1] = 'LEFT';
+document.grid1_WIDTH[1] = '180';
+document.grid1_ControlAsoc[1] = 'POSICION_INFO';
+document.grid1_PRG[1] = 'N';
+document.grid1[2] = 'CAMPAÑA_COLA_INFO';
+document.grid1_ALIGN[2] = 'LEFT';
+document.grid1_WIDTH[2] = '180';
+document.grid1_ControlAsoc[2] = 'CAMPAÑA_COLA_INFO';
+document.grid1_PRG[2] = 'N';
+document.grid1_colsGrabacion = '';
+document.grid1_colsGrabacionDep = '';
+
+</script>
+<script language="javascript" type="text/javascript" defer="">
+document.paramnames = 'EXECUTIONMODE|@CLIENTE|@USUARIO|@IMPERSONIFICADO|@Filtro_por_Campañas|@Campañas|@Filtro_por_Campañas_Salientes|@Campañas_Salientes|@Filtro_por_Colas|@Colas|@Filtro_por_Estado_de_Usuario|@Estados_Usuarios|@Columnas_Adicionales|@Columnas_Adicionales_de_datos_de_Contacto';
+document.paramvalues = 'WINDOWMODE|1000|1839|N|S|<NewDataSet>  <Valores>    <Valor>50 - PREDICTIVO PORTABILIDAD</Valor>  </Valores></NewDataSet>|N|<NewDataSet />|N|<NewDataSet />|S|<NewDataSet>  <Valores>    <Valor>Agente (Ent.)</Valor>  </Valores>  <Valores>    <Valor>Agente (Sal.)</Valor>  </Valores>  <Valores>    <Valor>Llamando (Sal.)</Valor>  </Valores>  <Valores>    <Valor>Logueado</Valor>  </Valores>  <Valores>    <Valor>Logueado S/D</Valor>  </Valores>  <Valores>    <Valor>Ringing (Ent.)</Valor>  </Valores>  <Valores>    <Valor>Ringing (Sal.)</Valor>  </Valores></NewDataSet>|<NewDataSet>  <Valores>    <Valor>Campaña / Cola</Valor>  </Valores></NewDataSet>|<NewDataSet />';
+document.scorecardid = 5;
+document.windowid = 1;
+document.subReportsCount = 1;
+
+function refreshSubReports(initialCall)
+{
+GetGridData(5, 1, 1, "__33", "EXECUTIONMODE|@CLIENTE|@USUARIO|@IMPERSONIFICADO|@Filtro_por_Campañas|@Campañas|@Filtro_por_Campañas_Salientes|@Campañas_Salientes|@Filtro_por_Colas|@Colas|@Filtro_por_Estado_de_Usuario|@Estados_Usuarios|@Columnas_Adicionales|@Columnas_Adicionales_de_datos_de_Contacto", document.paramvalues, 2);
+
+}
+refreshSubReports(true);
+</script>
+
+<script language="javascript">
+document.gridDefaultPageSize = 0;
+</script>
+<script language="javascript">
+function neoskipvalidation()
+{
+	if (typeof(Page_ValidationActive)=='undefined' || Page_ValidationActive==null || Page_ValidationActive ) 
+		Page_ValidationActive = false ;
+}
+</script>
+<script language="javascript" type="text/javascript">
+
+function HabilitarValidatorsxControles(controlesToValidate) {
+    var i;
+    controlesToValidate = controlesToValidate.Replace("_DrpPnl_Calendar1_d0", "").toString();
+    controlesToValidate += "," + controlesToValidate.Replace("_", "x");
+    controlesToValidate += "," + controlesToValidate.Replace("_input", "");
+    if (controlesToValidate != "" && controlesToValidate.Replace("Todos", "").Replace(",", "") == "")
+        controlesToValidate = "Todos";
+
+
+    if (controlesToValidate != 'Todos') {
+        for (i = 0; i <= Page_Validators.length - 1; i++) {
+            if (Page_Validators[i].controltovalidate == 'undefined') {
+                {
+                    alertPopup('El control ' + Page_Validators[i].id + ' está mal configurado en la pantalla.');
+                    return false;
+                }
+            }
+            Page_Validators[i].enabled = (((',' + controlesToValidate + ',').indexOf(',' + Page_Validators[i].controltovalidate + ',') >= 0) || ((',' + controlesToValidate + ',').indexOf(',' + Page_Validators[i].controltovalidate.replace('ED', '') + ',') >= 0) || (controlesToValidate == 'Todos')) && !$("#" + Page_Validators[i].controltovalidate).is(':disabled') && !$("#" + Page_Validators[i].controltovalidate).find("img").hasClass("DISABLED");
+
+            try {
+                if (Page_Validators[i].enabled && igedit_getById(Page_Validators[i].controltovalidate) != null) {
+                    Page_Validators[i].enabled = igedit_getById(Page_Validators[i].controltovalidate).getEnabled();
+                }
+            }
+            catch (ex) {
+            }
+
+            Page_Validators[i].style.visibility = Page_Validators[i].enabled ? Page_Validators[i].style.visibility : 'hidden';
+        }
+    }
+    else if (!document.location.toString().toLowerCase().contains("cati_nodo_eval") && !document.location.toString().toLowerCase().contains("bases_cuotas_expresion")) {
+        for (i = 0; i <= Page_Validators.length - 1; i++) {
+            if (Page_Validators[i].controltovalidate == 'undefined') {
+                {
+                    alertPopup('El control ' + Page_Validators[i].id + ' está mal configurado en la pantalla.');
+                    return false;
+                }
+            }
+            if ($("#igtxt" + Page_Validators[i].controltovalidate).length == 1)
+                Page_Validators[i].enabled = !$("#igtxt" + Page_Validators[i].controltovalidate).is(':disabled') && !$("#" + Page_Validators[i].controltovalidate).find("img").hasClass("DISABLED");
+            else
+                Page_Validators[i].enabled = !$("#" + Page_Validators[i].controltovalidate).is(':disabled') && !$("#" + Page_Validators[i].controltovalidate).find("img").hasClass("DISABLED");
+            Page_Validators[i].style.visibility = Page_Validators[i].enabled ? Page_Validators[i].style.visibility : 'hidden';
+        }
+    }
+
+}
+
+
+   function ValidatorOnChange(event) {
+
+
+
+       if (!event) {
+           event = window.event;
+       }
+       Page_InvalidControlToBeFocused = null;
+       var targetedControl;
+
+       if (event == undefined) {
+           event = new Object();
+           event.srcElement = document.getElementById(document.lastDatePickerControlID + "_input");
+           if (event.srcElement == null) {
+               event.srcElement = document.getElementById(document.lastDatePickerControlID.Replace("_","x") + "_input");
+           }
+       }
+
+       if ((typeof (event.srcElement) != 'undefined') && (event.srcElement != null)) {
+           targetedControl = event.srcElement;
+       }
+       else {
+           targetedControl = event.target;
+       }
+       var vals;
+       if (typeof (targetedControl.Validators) != 'undefined') {
+           vals = targetedControl.Validators;
+       }
+       else {
+           if (targetedControl.tagName.toLowerCase() == 'label') {
+               targetedControl = document.getElementById(targetedControl.htmlFor);
+               vals = targetedControl.Validators;
+           }
+       }
+
+       var i;
+       for (i = 0; i < vals.length; i++) {
+           ValidatorValidate(vals[i], null, event);
+       }
+       ValidatorUpdateIsValid();
+   }
+
+
+   function igtbl_cellClickDown(evnt, gn) {
+
+       var oldActivRowId = "";
+
+       if (isIE && parseInt(document.navigatorVersion) >= 10 && igtbl_getActiveRow(gn) != null) {
+           oldActivRowId = igtbl_getActiveRow(gn).Id
+       }
+
+       var gs = igtbl_getGridById(gn);
+       if (!gs)
+           return;
+       gs.event = evnt;
+       igtbl_lastActiveGrid = gn;
+       gs._mouseDown = 1;
+       gs.Element.setAttribute("mouseDown", "1");
+       var se = igtbl_srcElement(evnt);
+       if (!se || se == gs._editorCurrent) return;
+       if (se.id == gn + "_vl") { if (gs._focusElem) ig_cancelEvent(evnt); return; }
+       if (se.id == gn + "_tb" || se.id == gn + "_ta")
+           return;
+       var sel = igtbl_getElementById(gn + "_vl");
+       if (sel && sel.style.display == "" && sel.getAttribute("noOnBlur"))
+           return igtbl_cancelEvent(evnt);
+       ig_cancelEvent(evnt);
+       while (se && (se.tagName != "TD" || se.id.length < gn.length || se.id.substr(0, gn.length) != gn))
+           se = se.parentNode;
+       if (!se)
+           return;
+       if (se.tagName == "TD") {
+           var row;
+           var id = gs._mouseID = se.id;
+           var cell = igtbl_getCellById(id);
+           if (cell) {
+               row = cell.Row;
+               id = cell.Element.id;
+           }
+           else row = igtbl_getRowById(id);
+           if (!row && !cell) return;
+           var fac = row.Band.firstActiveCell;
+           if (igtbl_fireEvent(gn, gs.Events.MouseDown, "(\"" + gn + "\",\"" + id + "\"," + igtbl_button(gn, evnt) + ")") == true) {
+               igtbl_cancelEvent(evnt);
+               return true;
+           }
+           var band = row.Band;
+           var bandNo = band.Index;
+           if (igtbl_hideEdit(gn)) return;
+           if (igtbl_button(gn, evnt) == 0 && !cell && igtbl_getOffsetY(evnt, se) > igtbl_clientHeight(se) - 4 && igtbl_getRowSizing(gn, bandNo, row.Element) == 2 && !se.getAttribute("groupRow")) {
+               gs.Element.setAttribute("elementMode", "resize");
+               gs.Element.setAttribute("resizeRow", row.Element.id);
+               row.Element.style.height = row.Element.offsetHeight;
+           }
+           else {
+               var te = gs.Element;
+               var workTableId;
+               if (row.IsAddNewRow && row.Band.Index == 0)
+                   workTableId = gs.Element.id;
+               else
+                   if (se.getAttribute("groupRow"))
+                       workTableId = se.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.id;
+                   else
+                       workTableId = row.Element.parentNode.parentNode.id;
+               if (igtbl_button(gn, evnt) != 0)
+                   return;
+               if (workTableId == "")
+                   return;
+
+               te.removeAttribute("lastSelectedCell");
+               var prevSelRow = gs.SelectedRows[igtbl_getWorkRow(row.Element, gn).id];
+               if (prevSelRow && igtbl_getLength(gs.SelectedRows) > 1)
+                   prevSelRow = false;
+               var selPresent = (igtbl_getLength(gs.SelectedCells) > 0 ? 1 : 0) | (igtbl_getLength(gs.SelectedRows) > 0 ? 2 : 0) | (igtbl_getLength(gs.SelectedCols) > 0 ? 4 : 0);
+               if (se.getAttribute("groupRow") || !cell || igtbl_getCellClickAction(gn, bandNo) == 2) {
+                   if (!(igtbl_getSelectTypeRow(gn, bandNo) == 3 && evnt.ctrlKey) && !(row.getSelected() && igtbl_getLength(gs.SelectedRows) == 1))
+                       igtbl_clearSelectionAll(gn);
+               }
+               else {
+                   if (!(igtbl_getSelectTypeCell(gn, bandNo) == 3 && evnt.ctrlKey) && !(cell.getSelected() && igtbl_getLength(gs.SelectedCells) == 1))
+                       igtbl_clearSelectionAll(gn);
+               }
+               gs.Element.setAttribute("elementMode", "select");
+               if (se.getAttribute("groupRow")) {
+                   te.setAttribute("selectTable", se.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.id);
+                   te.setAttribute("selectMethod", "row");
+               }
+               else {
+                   te.setAttribute("selectTable", workTableId);
+                   if (!cell || igtbl_getCellClickAction(gn, bandNo) == 2)
+                       te.setAttribute("selectMethod", "row");
+                   else
+                       te.setAttribute("selectMethod", "cell");
+               }
+               if (te.getAttribute("shiftSelect") && evnt.shiftKey)
+                   igtbl_selectRegion(gn, se);
+               else {
+                   if (!cell || igtbl_getCellClickAction(gn, bandNo) == 2 || se.getAttribute("groupRow")) {
+                       var seRow = igtbl_getRowById(row.Element.id);
+                       if (gs.SelectedRows[row.Element.id] && evnt.ctrlKey) {
+                           igtbl_selectRow(gn, seRow, false);
+                           gs.setActiveRow(seRow);
+                       }
+                       else {
+                           var showEdit = true;
+                           if (!gs._exitEditCancel) {
+                               if (gs.Activation.AllowActivation) {
+                                   var ar = gs.oActiveRow;
+                                   if (ar != seRow) {
+                                       gs.setActiveRow(seRow);
+                                       showEdit = false;
+                                   }
+                                   else
+                                       showEdit = true;
+                               }
+                               if (igtbl_getSelectTypeRow(gn, bandNo) > 1)
+                                   igtbl_selectRow(gn, seRow, true, !prevSelRow);
+                               if (showEdit && !se.getAttribute("groupRow") && row)
+                                   row.editRow();
+                           }
+                       }
+                   }
+                   else {
+                       if (cell.getSelected() && evnt.ctrlKey) {
+                           cell.select(false);
+                           cell.activate();
+                       }
+                       else {
+                           if (band.getSelectTypeCell() > 1 && band.getCellClickAction() >= 1 && !gs._exitEditCancel)
+                               cell.select();
+                           else if (selPresent) {
+                               var gsNPB = gs.NeedPostBack;
+                               igtbl_fireEvent(gn, gs.Events.AfterSelectChange, "(\"" + gn + "\",\"" + id + "\");");
+                               if (!gsNPB && !(gs.Events.AfterSelectChange[1] & selPresent))
+                                   gs.NeedPostBack = false;
+                           }
+                           cell.activate();
+                       }
+                   }
+                   if (se.getAttribute("groupRow"))
+                       te.setAttribute("startPointRow", se.parentNode.parentNode.parentNode.parentNode.parentNode.id);
+                   else
+                       te.setAttribute("startPointRow", row.Element.id);
+                   te.setAttribute("startPointCell", id);
+                   te.removeAttribute("shiftSelect");
+                   if (!evnt.ctrlKey)
+                       te.setAttribute("shiftSelect", true);
+               }
+           }
+       }
+       if (typeof (igtbl_currentEditTempl) != "undefined" && igtbl_currentEditTempl != null)
+           igtbl_gRowEditMouseDown(evnt);
+       if (typeof (igcmbo_currentDropped) != "undefined" && igcmbo_currentDropped != null)
+           igcmbo_mouseDown(evnt);
+
+
+
+       if (oldActivRowId != "" && igtbl_getActiveRow(gn) != null) {
+           if (oldActivRowId != igtbl_getActiveRow(gn).Id) {
+               $("#" + oldActivRowId + " td").css("backgroundColor", "");
+               $("#" + oldActivRowId + " td").css("color", "");
+               $("#" + oldActivRowId + " td").css("font-family", "roboto");
+               $("#" + oldActivRowId + " td").css("font-weight", "");
+           }
+       }
+
+   }
+
+
+   function igtbl_headerClickUp(evnt, gn) {
+       if (!evnt && event)
+           evnt = event;
+       if (!gn && igtbl_lastActiveGrid)
+           gn = igtbl_lastActiveGrid;
+       if (!gn || !evnt)
+           return false;
+       var gs = igtbl_getGridById(gn);
+       if (!gs)
+           return;
+       gs.event = evnt;
+       if (igtbl_button(gn, evnt) == 2)
+           return;
+       var te = gs.Element;
+       te.removeAttribute("mouseDown");
+       var se = igtbl_srcElement(evnt);
+       if (se && se.tagName == "IMG" && (se.getAttribute("imgType") == "group" || se.getAttribute("imgType") == "fixed"))
+           return;
+       while (se && (se.tagName != "TH" || se.id.length < gn.length || se.id.substr(0, gn.length) != gn) && (se.tagName != "DIV" || !se.getAttribute("groupInfo")))
+           se = se.parentNode;
+       if (!se)
+           return;
+       if ($(se).attr("class").contains("fa_"))
+           return;
+
+       var seTemp = se;
+       while (seTemp != null) {
+           if (seTemp.tagName == "TFOOT") {
+               return;
+           }
+           seTemp = seTemp.parentNode
+       }
+       seTemp = null;
+       if (se.tagName == "TH") {
+           var column = igtbl_getColumnById(se.id);
+           if (!column) return;
+           var bandNo = column.Band.Index;
+           var columnNo = column.Index;
+           var mode = te.getAttribute("elementMode");
+
+           var headerClickNeedPost = false;
+           if (mode != "resize") {
+               var oldNP = gs.NeedPostBack;
+               igtbl_fireEvent(gn, gs.Events.ColumnHeaderClick, "(\"" + gn + "\",\"" + se.id + "\"," + igtbl_button(gn, evnt) + ")");
+               if (gs.NeedPostBack && gs.NeedPostBack != oldNP)
+                   headerClickNeedPost = true;
+           }
+           if (igtbl_fireEvent(gn, gs.Events.MouseUp, "(\"" + gn + "\",\"" + se.id + "\"," + igtbl_button(gn, evnt) + ")") == true)
+               return true;
+           if (igtbl_getHeaderClickAction(gn, bandNo, columnNo) != 1)
+               igtbl_changeStyle(gn, se, null);
+           te.removeAttribute("elementMode");
+           te.removeAttribute("resizeColumn");
+           te.removeAttribute("selectMethod");
+           if (!te.getAttribute("shiftSelect"))
+               te.removeAttribute("startColumn");
+           if (mode != "resize" && (igtbl_getHeaderClickAction(gn, bandNo, columnNo) == 2 || igtbl_getHeaderClickAction(gn, bandNo, columnNo) == 3) && column.SortIndicator != 3) {
+               if (gs.Bands[bandNo].ClientSortEnabled) {
+                   gs.startHourGlass();
+                   gs.sortingColumn = se;
+                   gs.oldColCursor = se.style.cursor;
+                   se.style.cursor = "wait";
+                   window.setTimeout("igtbl_gridSortColumn('" + gn + "','" + se.id + "'," + evnt.shiftKey + ")", 1);
+               }
+               else
+                   gs.sortColumn(se.id, evnt.shiftKey);
+               if (gs.NeedPostBack && !headerClickNeedPost)
+                   igtbl_doPostBack(gn, evnt.shiftKey ? "shiftKey:true" : "");
+           }
+           else {
+               if (mode == "resize")
+                   igtbl_resizeDivMouseUp(evnt);
+               if ((mode == "resize" || mode == "select") && gs.NeedPostBack)
+                   igtbl_doPostBack(gn);
+               te.removeAttribute("elementMode");
+           }
+       }
+       else if (se.tagName == "DIV" && se.getAttribute("groupInfo")) {
+           igtbl_fireEvent(gn, gs.Events.ColumnHeaderClick, "(\"" + gn + "\",\"" + se.id + "\"," + igtbl_button(gn, evnt) + ")");
+           if (igtbl_fireEvent(gn, gs.Events.MouseUp, "(\"" + gn + "\",\"" + se.id + "\"," + igtbl_button(gn, evnt) + ")") == true)
+               return;
+           var groupInfo = se.getAttribute("groupInfo").split(":");
+           if (groupInfo[0] != "band") {
+               igtbl_changeStyle(gn, se, null);
+               var bandNo = igtbl_bandNoFromColId(se.id);
+               var columnNo = igtbl_colNoFromColId(se.id);
+               var column = gs.Bands[bandNo].Columns[columnNo];
+               if ((igtbl_getHeaderClickAction(gn, bandNo, columnNo) == 2 || igtbl_getHeaderClickAction(gn, bandNo, columnNo) == 3) && column.SortIndicator != 3) {
+                   if (gs.Bands[bandNo].ClientSortEnabled) {
+                       gs.startHourGlass();
+                       gs.sortingColumn = se;
+                       gs.oldColCursor = se.style.cursor;
+                       se.style.cursor = "wait";
+                       window.setTimeout("igtbl_gridSortColumn('" + gn + "','" + se.id + "',true)", 1);
+                   }
+                   else
+                       gs.sortColumn(se.id, evnt.shiftKey);
+                   if (gs.NeedPostBack)
+                       igtbl_doPostBack(gn, evnt.shiftKey ? "shiftKey:true" : "");
+               }
+           }
+       }
+       if (gs.NeedPostBack)
+           igtbl_doPostBack(gn, 'HeaderClick:' + se.id);
+       return true;
+   }
+
+</script>
+<script type="text/javascript">
+//<![CDATA[
+document.IdCRM = 1;
+document.modoCRM = 'Production';
+document.navigator = 'Chrome';
+document.navigatorVersion = '151.0';
+document.webChatMode = 'Disabled';
+document.outgoingEmail = false;
+document.outgoingWhatsapp = false;
+document.responsive = true;
+//]]>
+</script>
+</form>
+    <link href="css/jquery-ui.css" rel="stylesheet" type="text/css">
+    <script src="js/1.11.4/jquery-ui.js" type="text/javascript"></script>
+<script src="contextmenu/src/jquery.contextMenu.js" type="text/javascript"></script><script src="contextmenu/dist/jquery.ui.position.min.js" type="text/javascript"></script>
+
+</body></html>

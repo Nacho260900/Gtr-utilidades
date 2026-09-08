@@ -1,0 +1,320 @@
+{
+  "timestamp": "2026-09-08 15:14:56",
+  "metricas_logueados": {
+    "global": {
+      "total_agentes_logueados": 9,
+      "promedio_segundos": 113.44,
+      "promedio_formato": "00:01:53",
+      "minimo_formato": "00:00:05",
+      "maximo_formato": "00:14:03"
+    },
+    "por_monitor": {
+      "1": {
+        "label": "Campaña 50 - Estados 1",
+        "agentes_logueados": 9,
+        "promedio_segundos": 113.44,
+        "promedio_formato": "00:01:53",
+        "minimo_formato": "00:00:05",
+        "maximo_formato": "00:14:03"
+      }
+    }
+  },
+  "monitores": [
+    {
+      "total_registros_texto": "Registros (16)",
+      "total_registros": 16,
+      "agentes": [
+        {
+          "id_usuario": "1714",
+          "nombre": "Gabriela Janet, Rodriguez",
+          "estado": "Logueado",
+          "duracion": "0:00:50",
+          "telefono": "",
+          "tipo_llamada": "",
+          "id_campana": "",
+          "campana": "N/A",
+          "tipo_discador": "N/A",
+          "cola": "N/A",
+          "color_fondo": "gray",
+          "raw": {
+            "usuario": "1714 - Gabriela Janet, Rodriguez",
+            "estado": "Logueado (0:00:50)",
+            "campana": "N/A (N/A) | N/A"
+          }
+        },
+        {
+          "id_usuario": "1874",
+          "nombre": "CANDELA, RODRIGUEZ",
+          "estado": "Agente",
+          "duracion": "0:00:11",
+          "telefono": "111573655413",
+          "tipo_llamada": "NO PROCESADO",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "blue",
+          "raw": {
+            "usuario": "1874 - CANDELA, RODRIGUEZ",
+            "estado": "Agente (0:00:11) | 111573655413 (NO PROCESADO)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        },
+        {
+          "id_usuario": "1898",
+          "nombre": "Marianela Giovanna, Conti",
+          "estado": "Logueado",
+          "duracion": "0:00:23",
+          "telefono": "",
+          "tipo_llamada": "",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "gray",
+          "raw": {
+            "usuario": "1898 - Marianela Giovanna, Conti",
+            "estado": "Logueado (0:00:23)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        },
+        {
+          "id_usuario": "1903",
+          "nombre": "MELISA, SILVA",
+          "estado": "Logueado",
+          "duracion": "0:00:22",
+          "telefono": "",
+          "tipo_llamada": "",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "gray",
+          "raw": {
+            "usuario": "1903 - MELISA, SILVA",
+            "estado": "Logueado (0:00:22)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        },
+        {
+          "id_usuario": "1936",
+          "nombre": "Natalia Jaquelina, Manzanares",
+          "estado": "Agente",
+          "duracion": "0:00:01",
+          "telefono": "111540441834",
+          "tipo_llamada": "NO PROCESADO",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "blue",
+          "raw": {
+            "usuario": "1936 - Natalia Jaquelina, Manzanares",
+            "estado": "Agente (0:00:01) | 111540441834 (NO PROCESADO)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        },
+        {
+          "id_usuario": "1942",
+          "nombre": "LUIS GABRIEL, MENDEZ",
+          "estado": "Logueado",
+          "duracion": "0:00:05",
+          "telefono": "",
+          "tipo_llamada": "",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "gray",
+          "raw": {
+            "usuario": "1942 - LUIS GABRIEL, MENDEZ",
+            "estado": "Logueado (0:00:05)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        },
+        {
+          "id_usuario": "1968",
+          "nombre": "Lucia Guillermina, Rozalez",
+          "estado": "Agente",
+          "duracion": "0:00:12",
+          "telefono": "111554881833",
+          "tipo_llamada": "NO PROCESADO",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "blue",
+          "raw": {
+            "usuario": "1968 - Lucia Guillermina, Rozalez",
+            "estado": "Agente (0:00:12) | 111554881833 (NO PROCESADO)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        },
+        {
+          "id_usuario": "1982",
+          "nombre": "MAIRA MICAELA,  MOYANO",
+          "estado": "Logueado",
+          "duracion": "0:14:03",
+          "telefono": "",
+          "tipo_llamada": "",
+          "id_campana": "",
+          "campana": "N/A",
+          "tipo_discador": "N/A",
+          "cola": "N/A",
+          "color_fondo": "gray",
+          "raw": {
+            "usuario": "1982 - MAIRA MICAELA,  MOYANO",
+            "estado": "Logueado (0:14:03)",
+            "campana": "N/A (N/A) | N/A"
+          }
+        },
+        {
+          "id_usuario": "2034",
+          "nombre": "KAREN MAILEN, BUENO",
+          "estado": "Agente",
+          "duracion": "0:02:24",
+          "telefono": "261156065452",
+          "tipo_llamada": "NO PROCESADO",
+          "id_campana": "157",
+          "campana": "SOLO PINGING MZA",
+          "tipo_discador": "Predictivo",
+          "cola": "53 - DERIVACION G PORTABILIDAD",
+          "color_fondo": "blue",
+          "raw": {
+            "usuario": "2034 - KAREN MAILEN, BUENO",
+            "estado": "Agente (0:02:24) | 261156065452 (NO PROCESADO)",
+            "campana": "157 - SOLO PINGING MZA (Predictivo) | 53 - DERIVACION G PORTABILIDAD"
+          }
+        },
+        {
+          "id_usuario": "2098",
+          "nombre": "GUSTAVO ALEJANDRO, FERNANDEZ",
+          "estado": "Agente",
+          "duracion": "0:00:14",
+          "telefono": "111566789763",
+          "tipo_llamada": "NO PROCESADO",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "blue",
+          "raw": {
+            "usuario": "2098 - GUSTAVO ALEJANDRO, FERNANDEZ",
+            "estado": "Agente (0:00:14) | 111566789763 (NO PROCESADO)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        },
+        {
+          "id_usuario": "2104",
+          "nombre": "PRISCILA ISABEL, ARENAS",
+          "estado": "Logueado",
+          "duracion": "0:00:14",
+          "telefono": "",
+          "tipo_llamada": "",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "gray",
+          "raw": {
+            "usuario": "2104 - PRISCILA ISABEL, ARENAS",
+            "estado": "Logueado (0:00:14)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        },
+        {
+          "id_usuario": "2201",
+          "nombre": "LUCAS MATIAS ALBERTO, ESPINOZA",
+          "estado": "Agente",
+          "duracion": "0:00:04",
+          "telefono": "111532704571",
+          "tipo_llamada": "NO PROCESADO",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "blue",
+          "raw": {
+            "usuario": "2201 - LUCAS MATIAS ALBERTO, ESPINOZA",
+            "estado": "Agente (0:00:04) | 111532704571 (NO PROCESADO)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        },
+        {
+          "id_usuario": "2203",
+          "nombre": "FLORENCIA ANTONELLA, CASADO",
+          "estado": "Logueado",
+          "duracion": "0:00:22",
+          "telefono": "",
+          "tipo_llamada": "",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "gray",
+          "raw": {
+            "usuario": "2203 - FLORENCIA ANTONELLA, CASADO",
+            "estado": "Logueado (0:00:22)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        },
+        {
+          "id_usuario": "2358",
+          "nombre": "LUCAS ROLANDO, BUCHELO",
+          "estado": "Logueado",
+          "duracion": "0:00:20",
+          "telefono": "",
+          "tipo_llamada": "",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "gray",
+          "raw": {
+            "usuario": "2358 - LUCAS ROLANDO, BUCHELO",
+            "estado": "Logueado (0:00:20)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        },
+        {
+          "id_usuario": "2361",
+          "nombre": "LEONELA LUCIA, REINOSO",
+          "estado": "Agente",
+          "duracion": "0:00:05",
+          "telefono": "111533774415",
+          "tipo_llamada": "NO PROCESADO",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "blue",
+          "raw": {
+            "usuario": "2361 - LEONELA LUCIA, REINOSO",
+            "estado": "Agente (0:00:05) | 111533774415 (NO PROCESADO)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        },
+        {
+          "id_usuario": "2365",
+          "nombre": "ROCIO ANTONELLA, NIETO",
+          "estado": "Logueado",
+          "duracion": "0:00:22",
+          "telefono": "",
+          "tipo_llamada": "",
+          "id_campana": "50",
+          "campana": "PREDICTIVA PRINCIPAL",
+          "tipo_discador": "Predictivo",
+          "cola": "N/A",
+          "color_fondo": "gray",
+          "raw": {
+            "usuario": "2365 - ROCIO ANTONELLA, NIETO",
+            "estado": "Logueado (0:00:22)",
+            "campana": "50 - PREDICTIVA PRINCIPAL (Predictivo) | N/A"
+          }
+        }
+      ],
+      "monitor_id": 1,
+      "monitor_label": "Campaña 50 - Estados 1"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+position: absolute; width: 779.996px; height: 1026.97px; inset: -54px auto auto -15.309px; background: none 0% 0% / auto repeat scroll padding-box border-box rgb(233, 234, 238);
